@@ -18,6 +18,9 @@ age = 0
 gender = ""
 height = 0
 weight = 0
+exercise = ""
+exerciseTime = ""
+exerciseNum = ""
 
 @app.route("/")
 def hello():
@@ -45,21 +48,15 @@ def getAge():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n사용자님의 성별을 입력해 주세요. \nex)남자"
+                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n\n사용자님의 성별을 입력해 주세요. \nex)남자"
                     }
-                }
-            ],"quickReplies": [
-                {
-                    "messageText" : "시작",
-                    "action": "message",
-                    "label" : "시작"
                 }
             ]
         }
     }
 
 
-    age = ageReq
+    age = int(ageReq.replace("세",""))
     return jsonify(res)
 
 
@@ -67,13 +64,13 @@ def getAge():
 @app.route("/getGender", methods = ["GET", "POST"]) 
 def Gender():
     print("성별 정보 받는 함수")
-    global age
+    global gender
     req = request.get_json()
 
     print(req)
 
-    ageReq =  req["action"]["detailParams"]["sys_number_age"]["origin"] #나이 **세
-    print(ageReq)
+    gender =  req["action"]["detailParams"]["성별"]["value"] #성별
+    print(gender)
 
 
     res = {
@@ -82,26 +79,256 @@ def Gender():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n사용자님의 성별을 입력해 주세요. \nex)남자"
+                        "text" : "입력하신 성별은 " + gender + "입니다.😊\n\n사용자님의 키를 입력해 주세요. \nex)165cm"
                     }
-                }
-            ],"quickReplies": [
-                {
-                    "messageText" : "시작",
-                    "action": "message",
-                    "label" : "시작"
                 }
             ]
         }
     }
 
 
-    age = int(ageReq.remove("세"))
-    print(age)
+    print(age, gender)
     return jsonify(res)
 
 
 
+@app.route("/getHeight", methods = ["GET", "POST"]) 
+def Height():
+    print("키 정보 받는 함수")
+    global height
+    req = request.get_json()
+
+    print(req)
+
+    heightReq =  req["action"]["detailParams"]["sys_unit_length"]["origin"] #키 **cm
+    print(heightReq)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 키는 " + heightReq + "입니다.😊\n\n사용자님의 몸무게를 입력해 주세요. \nex)55kg"
+                    }
+                }
+            ]
+        }
+    }
+
+    height = int(heightReq.replace("cm",""))
+    print(age, gender, height)
+    return jsonify(res)
+
+
+
+@app.route("/getWeight", methods = ["GET", "POST"]) 
+def Weight():
+    print("몸무게 정보 받는 함수")
+    global weight
+    req = request.get_json()
+
+    print(req)
+
+    weightReq =  req["action"]["detailParams"]["sys_unit_weight"]["origin"] #몸무게 **kg
+    print(weightReq)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "itemCard": {
+                        "title": "종합 정보",
+                        "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
+                        "itemList": [
+                            {
+                                "title": "나이",
+                                "description": str(age) + "세"
+                            },
+                            {
+                                "title": "성별",
+                                "description": gender
+                            },
+                            {
+                                "title": "키",
+                                "description": str(height) + "cm"
+                            },
+                            {
+                                "title": "몸무게",
+                                "description": weightReq
+                            }
+                        ],
+                        "itemListAlignment" : "left",
+                        "buttons": [
+                            {
+                                "action": "message",
+                                "label": "맞습니다",
+                                "messageText": "운동량"
+                            },
+                            {
+                                "action":  "message",
+                                "label": "재입력",
+                                "messageText": "기본정보"
+                            }
+                        ],
+                        "buttonLayout" : "vertical"
+                    }
+                }
+            ]
+        }
+    }
+
+    weight = int(weightReq.replace("kg",""))
+    print(age, gender, height, weight)
+    print(res)
+
+    return jsonify(res)
+
+
+@app.route("/getExercise", methods = ["GET", "POST"]) 
+def Exercise():
+    print("1회 운동시간 정보 받는 함수")
+    global exercise
+    req = request.get_json()
+
+    print(req)
+
+    exerciseReq =  req["action"]["detailParams"]["sys_number_ordinal"]["origin"] #운동 번호
+    print(exerciseReq)
+
+    if exerciseReq == "1번":  exercise = "산책이나 출퇴근 걷기"
+    elif exerciseReq == "2번": exercise = "실외 또는 실내 천천히 달리기"
+    elif exerciseReq == "3번": exercise = "실외 또는 실내 빨리 달리기"
+    elif exerciseReq == "4번": exercise = "등산"
+    elif exerciseReq == "5번": exercise = "야외 또는 실내 자전거 타기"
+    elif exerciseReq == "6번": exercise = "테니스, 스쿼시, 라켓볼"
+    elif exerciseReq == "7번": exercise = "수영"
+    elif exerciseReq == "8번": exercise = "에어로빅, 댄스"
+    elif exerciseReq == "9번": exercise = "골프"
+    elif exerciseReq == "10번": exercise = "스키"
+    elif exerciseReq == "11번": exercise = "볼링"
+    elif exerciseReq == "12번": exercise = "탁구"
+    elif exerciseReq == "13번": exercise = "배드민턴"
+    elif exerciseReq == "14번": exercise = "요가, 스트레칭"
+    elif exerciseReq == "15번": exercise = "웨이트 트레이닝"
+    elif exerciseReq == "16번": exercise = "윗몸 일으키기"
+    elif exerciseReq == "17번": exercise = "팔굽혀펴기"
+    elif exerciseReq == "18번": exercise = "줄넘기"
+    elif exerciseReq == "19번": exercise = "아이스 스케이팅"
+    elif exerciseReq == "20번": exercise = "롤러 스케이팅"
+    elif exerciseReq == "21번": exercise = "태권도, 유도, 가라데 등의 무술"
+    elif exerciseReq == "22번": exercise = "태극권, 기체조"
+    elif exerciseReq == "23번": exercise = "단전호흡, 명상"
+    elif exerciseReq == "24번": exercise = "복싱, 다이어트 복싱"
+    elif exerciseReq == "25번": exercise = "아쿠아로빅"
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 번호는 " + exerciseReq + "이므로, 선택 운동은 " + exercise + "입니다.\n\n해당 운동의 1회 운동 시간을 입력해주세요. \nex) 1시간20분\n\n* 한시간 미만인 경우 0시간30분 과 같이 입력해 주세요."
+                    }
+                }
+            ]
+        }
+    }
+
+    print(age, gender, height, weight, exercise)
+    return jsonify(res)
+
+
+
+@app.route("/getExerciseTime", methods = ["GET", "POST"]) 
+def ExerciseTime():
+    print("1회 운동 시간 정보 받는 함수")
+    global exerciseTime
+    req = request.get_json()
+
+    print(req)
+
+    exerciseTime =  req["action"]["detailParams"]["sys_unit_duration"]["origin"] #1회 운동 시간
+    print(exerciseTime)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 1회 운동 시간은 " + exerciseTime + "입니다.\n\n해당 운동의 주당 운동 횟수를 입력해주세요.\nex)3회"
+                    }
+                }
+            ]
+        }
+    }
+
+    print(age, gender, height, weight, exercise ,exerciseTime)
+    return jsonify(res)
+
+
+@app.route("/getExerciseNum", methods = ["GET", "POST"]) 
+def ExerciseNum():
+    print("주당 운동 횟수 정보 받는 함수")
+    global exerciseNum
+    req = request.get_json()
+
+    print(req)
+
+    exerciseNum =  req["action"]["detailParams"]["횟수"]["value"] #주당 운동 횟수
+    print(exerciseNum)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "itemCard": {
+                        "title": "운동 정보",
+                        "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
+                        "itemList": [
+                            {
+                                "title": "운동",
+                                "description": exercise
+                            },
+                            {
+                                "title": "1회운동시간",
+                                "description": exerciseTime
+                            },
+                            {
+                                "title": "주당운동횟수",
+                                "description": exerciseNum
+                            }
+                        ],
+                        "itemListAlignment" : "left",
+                        "buttons": [
+                            {
+                                "action": "message",
+                                "label": "맞습니다",
+                                "messageText": "추가운동조사"
+                            },
+                            {
+                                "action":  "message",
+                                "label": "재입력",
+                                "messageText": "운동량"
+                            }
+                        ],
+                        "buttonLayout" : "vertical"
+                    }
+                }
+            ]
+        }
+    }
+
+    print(age, gender, height, weight, exercise ,exerciseTime, exerciseNum)
+    return jsonify(res)
 
 
 #------------------------------------------------------------------------1일 솔루션(의대)------------------------------------------------------------------------#
