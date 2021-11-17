@@ -14,15 +14,103 @@ db = cluster["DietTherapy"]
 음식섭취양 = db["음식섭취양"]
 
 food_name = ""
+age = 0
+gender = ""
+height = 0
+weight = 0
 
 @app.route("/")
 def hello():
     return "Chatbot server"
 
+
+
+#------------------------------------------------------------------------1년 솔루션(서울대)------------------------------------------------------------------------#
+
+@app.route("/getAge", methods = ["GET", "POST"]) 
+def getAge():
+    print("나이 정보 받는 함수")
+    global age
+    req = request.get_json()
+
+    print(req)
+
+    ageReq =  req["action"]["detailParams"]["sys_number_age"]["origin"] #나이 **세
+    print(ageReq)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n사용자님의 성별을 입력해 주세요. \nex)남자"
+                    }
+                }
+            ],"quickReplies": [
+                {
+                    "messageText" : "시작",
+                    "action": "message",
+                    "label" : "시작"
+                }
+            ]
+        }
+    }
+
+
+    age = ageReq
+    return jsonify(res)
+
+
+
+@app.route("/getGender", methods = ["GET", "POST"]) 
+def Gender():
+    print("성별 정보 받는 함수")
+    global age
+    req = request.get_json()
+
+    print(req)
+
+    ageReq =  req["action"]["detailParams"]["sys_number_age"]["origin"] #나이 **세
+    print(ageReq)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n사용자님의 성별을 입력해 주세요. \nex)남자"
+                    }
+                }
+            ],"quickReplies": [
+                {
+                    "messageText" : "시작",
+                    "action": "message",
+                    "label" : "시작"
+                }
+            ]
+        }
+    }
+
+
+    age = int(ageReq.remove("세"))
+    print(age)
+    return jsonify(res)
+
+
+
+
+
+#------------------------------------------------------------------------1일 솔루션(의대)------------------------------------------------------------------------#
+
+
 # 사진 전송 요구 + 사진 클라우드 링크 받아오는 함수 
 @app.route("/getPhoto", methods = ["GET", "POST"]) 
 def start():
-    print("start func")
+    print("사진 정보 받는 함수")
     req = request.get_json()
 
     print(req)
@@ -42,7 +130,7 @@ def start():
                         "text" : "사진 전송이 완료되었습니다.\n\n '인식된 음식'의 드신 양을 입력해 주세요."
                     }
                 }
-            ],
+            ]
         }
     }
 
@@ -195,6 +283,112 @@ def calorie():
     return jsonify(res)
 
 
+@app.route("/solution",methods = ["GET","POST"])
+def solution():
+    global food_name
+    global age
+    df = None
+    
+    print("솔루션 제공 함수")
+
+    req = request.get_json()
+    print(req)
+
+    user_id = req["userRequest"]["user"]["id"]
+    print(user_id)
+
+    food_type = req["action"]["detailParams"]["솔루션"]["value"]
+    print(food_type)
+
+    #나이에 맞는 기준량
+    if age >= 19 and age < 30:
+        print("19~29") 
+        calorie = 2600 #칼로리(kcal)
+        sodium = 1500 #나트륨(mg)
+        carbohydrate = 130 #탄수화물(g)
+        protein = 65 #단백질(g)
+        fat = round(float(food_detail[8]) / task2 * task3, 2) #지방(g)
+        kal = 800 #칼슘
+        vC = 100 #비타민 C
+        saturatedFat = round(float(food_detail[16]) / task2 * task3, 2) #포화지방산
+    elif age >= 30 and age < 50:
+        print("30~49")
+        calorie = 2500 #칼로리(kcal)
+        sodium = 1500 #나트륨(mg)
+        carbohydrate = 130 #탄수화물(g)
+        protein = 65 #단백질(g)
+        fat = round(float(food_detail[8]) / task2 * task3, 2) #지방(g)
+        kal = 800 #칼슘
+        vC = 100 #비타민 C
+        saturatedFat = round(float(food_detail[16]) / task2 * task3, 2) #포화지방산
+    elif age >= 50 and age < 65:
+        print("50~64")
+        calorie = 2200 #칼로리(kcal)
+        sodium = 1500 #나트륨(mg)
+        carbohydrate = 130 #탄수화물(g)
+        protein = 60 #단백질(g)
+        fat = round(float(food_detail[8]) / task2 * task3, 2) #지방(g)
+        kal = 750 #칼슘
+        vC = 100 #비타민 C
+        saturatedFat = round(float(food_detail[16]) / task2 * task3, 2) #포화지방산
+    elif age >= 65 and age < 75:
+        print("65~74")
+        calorie = 2000 #칼로리(kcal)
+        sodium = 1300 #나트륨(mg)
+        carbohydrate = 130  #탄수화물(g)
+        protein = 60 #단백질(g)
+        fat = round(float(food_detail[8]) / task2 * task3, 2) #지방(g)
+        kal = 700 #칼슘
+        vC = 100 #비타민 C
+        saturatedFat = round(float(food_detail[16]) / task2 * task3, 2) #포화지방산
+    elif age >= 75:
+        print("75 이상")
+        calorie = 1900 #칼로리(kcal)
+        sodium = 1100 #나트륨(mg)
+        carbohydrate = 130 #탄수화물(g)
+        protein = 60 #단백질(g)
+        fat = round(float(food_detail[8]) / task2 * task3, 2) #지방(g)
+        kal = 700 #칼슘
+        vC = 100 #비타민 C
+        saturatedFat = round(float(food_detail[16]) / task2 * task3, 2) #포화지방산
+    else:
+        print("나이 미입력")
+
+    calculate = [calorie, sodium, carbohydrate, protein, fat, kal, vC, saturatedFat]
+
+
+    answer = "3끼를 기준으로 솔루션을 제공합니다."
+
+    try:
+        df = pd.read_excel("./data/" + user_id + ".xlsx", engine='openpyxl')
+    except Exception as e:
+        answer = "입력된 식단 정보가 없습니다./n식단 입력 후 다시 시도해주세요."
+
+
+
+    res = {
+        "version" : "2.0",
+        "template": {
+            "outputs" : [
+                {
+                    "simpleText" : {
+                        "text": answer
+                    }
+                }
+            ],
+        }
+    }
+
+    food_name = food_type
+    return jsonify(res)
+
+
+
+
+
+
+#------------------------------------------------------------------------Test Func------------------------------------------------------------------------#
+
 
 
 
@@ -216,6 +410,11 @@ def test():
     }
 
     return jsonify(res)
+
+
+
+
+#------------------------------------------------------------------------엑셀 저장 함수------------------------------------------------------------------------#
 
 
 def to_excel(user_id, food_calculate):
@@ -243,6 +442,14 @@ def to_excel(user_id, food_calculate):
 
     df = df.append(new_data, ignore_index=True)
     df.to_excel("./data/" + user_id +".xlsx", index=False)
+
+
+
+
+
+
+#------------------------------------------------------------------------ Port------------------------------------------------------------------------#
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, threaded = True)
