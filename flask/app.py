@@ -48,7 +48,7 @@ def getAge():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n\n사용자님의 성별을 입력해 주세요. \nex)남자"
+                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n\n사용자님의 성별을 입력해 주세요. \nex) 남자"
                     }
                 }
             ]
@@ -79,7 +79,7 @@ def Gender():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 성별은 " + gender + "입니다.😊\n\n사용자님의 키를 입력해 주세요. \nex)165cm"
+                        "text" : "입력하신 성별은 " + gender + "입니다.😊\n\n사용자님의 키를 입력해 주세요. \nex) 165cm"
                     }
                 }
             ]
@@ -110,7 +110,7 @@ def Height():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 키는 " + heightReq + "입니다.😊\n\n사용자님의 몸무게를 입력해 주세요. \nex)55kg"
+                        "text" : "입력하신 키는 " + heightReq + "입니다.😊\n\n사용자님의 몸무게를 입력해 주세요. \nex) 55kg"
                     }
                 }
             ]
@@ -262,7 +262,7 @@ def ExerciseTime():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 1회 운동 시간은 " + exerciseTime + "입니다.\n\n해당 운동의 주당 운동 횟수를 입력해주세요.\nex)3회"
+                        "text" : "입력하신 1회 운동 시간은 " + exerciseTime + "입니다.\n\n해당 운동의 주당 운동 횟수를 입력해주세요.\nex) 3회"
                     }
                 }
             ]
