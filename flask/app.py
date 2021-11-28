@@ -14,6 +14,7 @@ db = cluster["DietTherapy"]
 음식섭취양 = db["음식섭취양"]
 
 food_name = ""
+user_name = ""
 age = 0
 gender = ""
 height = 0
@@ -21,6 +22,8 @@ weight = 0
 exercise = ""
 exerciseTime = ""
 exerciseNum = ""
+nutriSupplement = ""
+nutriIntake = ""
 
 @app.route("/")
 def hello():
@@ -29,6 +32,35 @@ def hello():
 
 
 #------------------------------------------------------------------------1년 솔루션(서울대)------------------------------------------------------------------------#
+
+@app.route("/getUserName", methods = ["GET", "POST"]) 
+def getUserName():
+    print("이름 정보 받는 함수")
+    global user_name
+    req = request.get_json()
+
+    print(req)
+
+    user_name =  req["action"]["detailParams"]["userName"]["value"] #나이 **세
+    print(user_name)
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 이름은 " + user_name + "입니다. 😊\n\n사용자님의 나이를 입력해 주세요. \nex) 24세"
+                    }
+                }
+            ]
+        }
+    }
+
+    print(user_name)
+    return jsonify(res)
+
 
 @app.route("/getAge", methods = ["GET", "POST"]) 
 def getAge():
@@ -48,7 +80,7 @@ def getAge():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 나이는 " + ageReq + "입니다.😊\n\n사용자님의 성별을 입력해 주세요. \nex) 남자"
+                        "text" : "입력하신 나이는 " + ageReq + "입니다. 😊\n\n사용자님의 성별을 입력해 주세요. \nex) 남자"
                     }
                 }
             ]
@@ -57,6 +89,7 @@ def getAge():
 
 
     age = int(ageReq.replace("세",""))
+    print(user_name, age)
     return jsonify(res)
 
 
@@ -79,7 +112,7 @@ def Gender():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 성별은 " + gender + "입니다.😊\n\n사용자님의 키를 입력해 주세요. \nex) 165cm"
+                        "text" : "입력하신 성별은 " + gender + "입니다. 😊\n\n사용자님의 키를 입력해 주세요. \nex) 165cm"
                     }
                 }
             ]
@@ -87,7 +120,7 @@ def Gender():
     }
 
 
-    print(age, gender)
+    print(user_name, age, gender)
     return jsonify(res)
 
 
@@ -110,7 +143,7 @@ def Height():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 키는 " + heightReq + "입니다.😊\n\n사용자님의 몸무게를 입력해 주세요. \nex) 55kg"
+                        "text" : "입력하신 키는 " + heightReq + "입니다. 😊\n\n사용자님의 몸무게를 입력해 주세요. \nex) 55kg"
                     }
                 }
             ]
@@ -118,7 +151,7 @@ def Height():
     }
 
     height = int(heightReq.replace("cm",""))
-    print(age, gender, height)
+    print(user_name, age, gender, height)
     return jsonify(res)
 
 
@@ -144,6 +177,10 @@ def Weight():
                         "title": "종합 정보",
                         "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
                         "itemList": [
+                            {
+                                "title": "이름",
+                                "description": user_name
+                            },
                             {
                                 "title": "나이",
                                 "description": str(age) + "세"
@@ -182,7 +219,7 @@ def Weight():
     }
 
     weight = int(weightReq.replace("kg",""))
-    print(age, gender, height, weight)
+    print(user_name, age, gender, height, weight)
     print(res)
 
     return jsonify(res)
@@ -239,7 +276,7 @@ def Exercise():
         }
     }
 
-    print(age, gender, height, weight, exercise)
+    print(user_name, age, gender, height, weight, exercise)
     return jsonify(res)
 
 
@@ -269,7 +306,7 @@ def ExerciseTime():
         }
     }
 
-    print(age, gender, height, weight, exercise ,exerciseTime)
+    print(user_name, age, gender, height, weight, exercise ,exerciseTime)
     return jsonify(res)
 
 
@@ -327,8 +364,115 @@ def ExerciseNum():
         }
     }
 
-    print(age, gender, height, weight, exercise ,exerciseTime, exerciseNum)
+    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum)
     return jsonify(res)
+
+
+@app.route("/getNutri", methods = ["GET", "POST"]) 
+def Nutri():
+    print("영양제 이름 받는 함수")
+    global nutriSupplement
+    req = request.get_json()
+
+    print(req)
+
+    nutriSupplement =  req["action"]["detailParams"]["nutri"]["value"] #영양제 이름
+    print(nutriSupplement)
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "입력하신 영양제의 이름은 " + nutriSupplement + "입니다.\n\n해당 영양제의 하루 섭취 횟수를 선택해주세요.\n섭취하시는 횟수가 없으시면 기타를 눌러주세요."
+                    }
+                }
+            ], "quickReplies": [
+                {
+                    "messageText" : "영양제선택1",
+                    "action": "message",
+                    "label" : "1알(포)"
+                },{
+                    "messageText" : "영양제선택2",
+                    "action": "message",
+                    "label" : "2알(포)"
+                },{
+                    "messageText" : "영양제선택3",
+                    "action": "message",
+                    "label" : "3알(포)"
+                },{
+                    "messageText" : "영양제기타",
+                    "action": "message",
+                    "label" : "기타"
+                }
+            ]
+        }
+    }
+
+    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum, nutriSupplement)
+    return jsonify(res)
+
+@app.route("/getNutriIntake", methods = ["GET", "POST"]) 
+def NutriIntake():
+    print("영양제 섭취량 받는 함수")
+    global nutriIntake
+    req = request.get_json()
+
+    print(req)
+
+    nutriIntakeStr =  req["action"]["detailParams"]["영양제선택지"]["value"] #영양제 복용량
+    print(nutriIntakeStr)
+
+    if nutriIntakeStr == "영양제선택1":
+        nutriIntake = "1알(포)"
+    elif nutriIntakeStr == "영양제선택2":
+        nutriIntake = "2알(포)"
+    elif nutriIntakeStr == "영양제선택3":
+        nutriIntake == "3알(포)"
+
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "itemCard": {
+                        "title": "종합 정보",
+                        "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
+                        "itemList": [
+                            {
+                                "title": "영양제 이름",
+                                "description": nutriSupplement
+                            },
+                            {
+                                "title": "하루 섭취량",
+                                "description": nutriIntake
+                            }
+                        ],
+                        "itemListAlignment" : "left",
+                        "buttons": [
+                            {
+                                "action": "message",
+                                "label": "맞습니다",
+                                "messageText": "식품섭취빈도조사시작"
+                            },
+                            {
+                                "action":  "message",
+                                "label": "재입력",
+                                "messageText": "영양제"
+                            }
+                        ],
+                        "buttonLayout" : "vertical"
+                    }
+                }
+            ]
+        }
+    }
+
+    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum, nutriSupplement, nutriIntake)
+    return jsonify(res)
+
 
 
 #------------------------------------------------------------------------1일 솔루션(의대)------------------------------------------------------------------------#
