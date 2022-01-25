@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from pandas.core.indexes.api import get_objs_combined_axis
 from pymongo import MongoClient
 from fractions import Fraction
+import re
+
+
+from user import SurveyUser
 app = Flask(__name__)
 
 cluster = MongoClient("mongodb+srv://user:0000@cluster0.uio0y.mongodb.net/myFirstDatabase?retryWrites=true&w=majority") # DB연결
@@ -14,6 +18,7 @@ db = cluster["DietTherapy"]
 음식섭취양 = db["음식섭취양"]
 식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양"]
 식이빈도조사_단위영양성분 = db["식이빈도조사_단위영양성분"]
+user_dict = {} # SurveyUser 객체가 들어감. 
 
 food_name = ""
 user_name = ""
@@ -29,6 +34,8 @@ nutriIntake = ""
 foodFrequency = []
 foodEntity = []
 foodArr = []
+
+
 
 solution_칼로리 = 0
 solution_탄수화물 = 0
@@ -50,14 +57,16 @@ def hello():
 @app.route("/getUserName", methods = ["GET", "POST"]) 
 def getUserName():
     print("이름 정보 받는 함수")
-    global user_name
+
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     user_name =  req["action"]["detailParams"]["userName"]["value"] 
-    print(user_name)
 
+    user = SurveyUser(user_id, user_name)
+    user_dict[user_id] = user
 
     res = {
         "version" : "2.0",
@@ -65,28 +74,28 @@ def getUserName():
             "outputs": [
                 {
                     "simpleText": {
-                        "text" : "입력하신 이름은 " + user_name + "입니다. 😊\n\n사용자님의 나이를 입력해 주세요. \nex) 24세"
+                        "text" : "입력하신 이름은 " + user_dict[user_id].user_name + "입니다. 😊\n\n사용자님의 나이를 입력해 주세요. \nex) 24세"
                     }
                 }
             ]
         }
     }
-
-    print(user_name)
+    print(user_dict)
     return jsonify(res)
 
 
 @app.route("/getAge", methods = ["GET", "POST"]) 
 def getAge():
-    print("나이 정보 받는 함수")
+
     global age
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     ageReq =  req["action"]["detailParams"]["sys_number_age"]["origin"] #나이 **세
-    print(ageReq)
-
+    age = int(ageReq.replace("세",""))
+    user_dict[user_id].age = age
 
     res = {
         "version" : "2.0",
@@ -100,25 +109,20 @@ def getAge():
             ]
         }
     }
-
-
-    age = int(ageReq.replace("세",""))
-    print(user_name, age)
     return jsonify(res)
 
 
 
-@app.route("/getGender", methods = ["GET", "POST"]) 
-def Gender():
-    print("성별 정보 받는 함수")
-    global gender
+@app.route("/getGender", methods = ["GET","POST"])
+def getGender():
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     gender =  req["action"]["detailParams"]["성별"]["value"] #성별
-    print(gender)
 
+    user_dict[user_id].gender = gender
 
     res = {
         "version" : "2.0",
@@ -133,23 +137,23 @@ def Gender():
         }
     }
 
-
-    print(user_name, age, gender)
     return jsonify(res)
 
 
 
 @app.route("/getHeight", methods = ["GET", "POST"]) 
 def Height():
-    print("키 정보 받는 함수")
-    global height
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     heightReq =  req["action"]["detailParams"]["sys_unit_length"]["origin"] #키 **cm
     print(heightReq)
 
+
+    height = int(heightReq.replace("cm",""))
+    user_dict[user_id].height = height
 
     res = {
         "version" : "2.0",
@@ -164,23 +168,20 @@ def Height():
         }
     }
 
-    height = int(heightReq.replace("cm",""))
-    print(user_name, age, gender, height)
     return jsonify(res)
 
 
 
 @app.route("/getWeight", methods = ["GET", "POST"]) 
 def Weight():
-    print("몸무게 정보 받는 함수")
-    global weight
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     weightReq =  req["action"]["detailParams"]["sys_unit_weight"]["origin"] #몸무게 **kg
-    print(weightReq)
-
+    weight = int(weightReq.replace("kg",""))
+    user_dict[user_id].weight = weight
 
     res = {
         "version" : "2.0",
@@ -193,19 +194,19 @@ def Weight():
                         "itemList": [
                             {
                                 "title": "이름",
-                                "description": user_name
+                                "description": user_dict[user_id].user_name
                             },
                             {
                                 "title": "나이",
-                                "description": str(age) + "세"
+                                "description": str(user_dict[user_id].age) + "세"
                             },
                             {
                                 "title": "성별",
-                                "description": gender
+                                "description": user_dict[user_id].gender
                             },
                             {
                                 "title": "키",
-                                "description": str(height) + "cm"
+                                "description": str(user_dict[user_id].height) + "cm"
                             },
                             {
                                 "title": "몸무게",
@@ -232,24 +233,21 @@ def Weight():
         }
     }
 
-    weight = int(weightReq.replace("kg",""))
-    print(user_name, age, gender, height, weight)
-    print(res)
-
+    print(user_dict[user_id])
     return jsonify(res)
 
 
 @app.route("/getExercise", methods = ["GET", "POST"]) 
 def Exercise():
     print("1회 운동시간 정보 받는 함수")
-    global exercise
+    exercise = ''
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     exerciseReq =  req["action"]["detailParams"]["sys_number_ordinal"]["origin"] #운동 번호
-    print(exerciseReq)
-
+    
     if exerciseReq == "1번":  exercise = "산책이나 출퇴근 걷기"
     elif exerciseReq == "2번": exercise = "실외 또는 실내 천천히 달리기"
     elif exerciseReq == "3번": exercise = "실외 또는 실내 빨리 달리기"
@@ -276,6 +274,7 @@ def Exercise():
     elif exerciseReq == "24번": exercise = "복싱, 다이어트 복싱"
     elif exerciseReq == "25번": exercise = "아쿠아로빅"
 
+    user_dict[user_id].exercise = exercise
 
     res = {
         "version" : "2.0",
@@ -290,7 +289,7 @@ def Exercise():
         }
     }
 
-    print(user_name, age, gender, height, weight, exercise)
+    print(user_dict[user_id])
     return jsonify(res)
 
 
@@ -298,15 +297,13 @@ def Exercise():
 @app.route("/getExerciseTime", methods = ["GET", "POST"]) 
 def ExerciseTime():
     print("1회 운동 시간 정보 받는 함수")
-    global exerciseTime
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     exerciseTime =  req["action"]["detailParams"]["sys_unit_duration"]["origin"] #1회 운동 시간
-    print(exerciseTime)
-
-
+    user_dict[user_id].exerciseTime = exerciseTime
     res = {
         "version" : "2.0",
         "template":{
@@ -320,21 +317,18 @@ def ExerciseTime():
         }
     }
 
-    print(user_name, age, gender, height, weight, exercise ,exerciseTime)
+    print(user_dict[user_id])
     return jsonify(res)
 
 
 @app.route("/getExerciseNum", methods = ["GET", "POST"]) 
 def ExerciseNum():
     print("주당 운동 횟수 정보 받는 함수")
-    global exerciseNum
     req = request.get_json()
 
-    print(req)
-
+    user_id = req["userRequest"]["user"]["id"]
     exerciseNum =  req["action"]["detailParams"]["횟수"]["value"] #주당 운동 횟수
-    print(exerciseNum)
-
+    user_dict[user_id].exerciseNum = exerciseNum
 
     res = {
         "version" : "2.0",
@@ -347,15 +341,15 @@ def ExerciseNum():
                         "itemList": [
                             {
                                 "title": "운동",
-                                "description": exercise
+                                "description": user_dict[user_id].exercise
                             },
                             {
                                 "title": "1회운동시간",
-                                "description": exerciseTime
+                                "description": user_dict[user_id].exerciseTime
                             },
                             {
                                 "title": "주당운동횟수",
-                                "description": exerciseNum
+                                "description": user_dict[user_id].exerciseNum
                             }
                         ],
                         "itemListAlignment" : "left",
@@ -378,20 +372,68 @@ def ExerciseNum():
         }
     }
 
-    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum)
+    print(user_dict[user_id])
+    return jsonify(res)
+
+
+
+@app.route("/getNutriNum", methods = ["GET", "POST"]) 
+def NutriNum():
+    print("영양제 종류 받는 함수")
+    req = request.get_json()
+
+    print(req)
+
+    user_id = req["userRequest"]["user"]["id"]
+    nutriType =  req["action"]["detailParams"]["nutriNum"]["value"] #영양제 종류(개수)
+    print(nutriType)
+
+    
+    nutriType2Num = re.findall("\d+", nutriType)
+    
+    user_dict[user_id].nutriType = nutriType
+
+   
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : "영양제 종류가" + user_dict[user_id].nutriType + "가 맞는지 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요."
+                    }
+                }
+            ], "quickReplies": [
+                {
+                    "messageText" : "영양제이름",
+                    "action": "message",
+                    "label" : "맞습니다"
+                },{
+                    "messageText" : "영양제종류",
+                    "action": "message",
+                    "label" : "재입력"
+                }
+            ]
+        }
+    }
+
+    
+    print(user_dict[user_id])
     return jsonify(res)
 
 
 @app.route("/getNutri", methods = ["GET", "POST"]) 
 def Nutri():
     print("영양제 이름 받는 함수")
-    global nutriSupplement
     req = request.get_json()
 
     print(req)
 
+    user_id = req["userRequest"]["user"]["id"]
     nutriSupplement =  req["action"]["detailParams"]["nutri"]["value"] #영양제 이름
     print(nutriSupplement)
+
+    user_dict[user_id].nutriSupplement = nutriSupplement
 
     res = {
         "version" : "2.0",
@@ -418,25 +460,28 @@ def Nutri():
                 },{
                     "messageText" : "영양제기타",
                     "action": "message",
-                    "label" : "기타"
                 }
             ]
         }
     }
 
-    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum, nutriSupplement)
+    print(user_dict[user_id])
     return jsonify(res)
 
+
+
 @app.route("/getNutriIntake", methods = ["GET", "POST"]) 
-def NutriIntake():
+def nutriIntake():
+
     print("영양제 섭취량 받는 함수")
-    global nutriIntake
+
     req = request.get_json()
-
     print(req)
-
+    
+    nutriIntake = ""
+    user_id = req["userRequest"]["user"]["id"]
     nutriIntakeStr =  req["action"]["detailParams"]["영양제선택지"]["value"] #영양제 복용량
-    print(nutriIntakeStr)
+    
 
     if nutriIntakeStr == "영양제선택1":
         nutriIntake = "1알(포)"
@@ -445,6 +490,7 @@ def NutriIntake():
     elif nutriIntakeStr == "영양제선택3":
         nutriIntake == "3알(포)"
 
+    user_dict[user_id].nutriIntake = nutriIntake
 
     res = {
         "version" : "2.0",
@@ -457,11 +503,11 @@ def NutriIntake():
                         "itemList": [
                             {
                                 "title": "영양제 이름",
-                                "description": nutriSupplement
+                                "description": user_dict[user_id].nutriSupplement
                             },
                             {
                                 "title": "하루 섭취량",
-                                "description": nutriIntake
+                                "description": user_dict[user_id].nutriIntake
                             }
                         ],
                         "itemListAlignment" : "left",
@@ -484,111 +530,67 @@ def NutriIntake():
         }
     }
 
-    print(user_name, age, gender, height, weight, exercise ,exerciseTime, exerciseNum, nutriSupplement, nutriIntake)
+    print(user_dict[user_id])
     return jsonify(res)
 
 
-# ---------------------------------------식품섭취 빈도 시작 (일단은 하드코딩, 추후 수정 예정) -----------------------------------------------
+# ---------------------------------------식품섭취 빈도 시작 -----------------------------------------------
 
-from survey import FoodSurveyForm
 import constant
 
 foodListForSurvey = list(식이빈도조사_음식섭취양.find())
-surveyForm = None
-
-foodFrequency = []
-foodEntity = []
 
 @app.route("/get1Frequency", methods = ["GET", "POST"])
 def get1Frequency():
-    global surveyForm
-    global foodFrequency
-    global foodEntity
-    global solution_칼로리
-    global solution_탄수화물
-    global solution_단백질
-    global solution_지방
-    global solution_나트륨
-    global solution_칼슘
-    global solution_비타민C
-    global solution_포화지방산
-    global solutionResultText
+
+    req = request.get_json()
+    user_id = req["userRequest"]["user"]["id"]
 
     nowFood = ''
+    idx = user_dict[user_id].survey.idx
 
-    if not surveyForm:
+    if user_dict[user_id].survey.idx == 0:
         print("새로운 읍식 섭취 빈도 조사 시작")
-        surveyForm = FoodSurveyForm()
-        req = request.get_json()
-        print(req)
-        nowFood = foodListForSurvey[surveyForm.foodIndex]
+        nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
     else :
-        print("전 음식에 대한 대답 : ")
-        # print(foodFrequency)
-        req = request.get_json()
         reqEntity = req["action"]["detailParams"]["섭취양선택지"]["value"]
-        # print(reqEntity)
-        beforeFood = foodListForSurvey[surveyForm.foodIndex-1]
-
+        beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
         portion = 0
 
         dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
         if reqEntity == '빈도선택1':
-            foodEntity.append(dbResult[3])
+            user_dict[user_id].survey.foodEntity.append(dbResult[3])
             portion = dbResult[3]
         elif reqEntity == '빈도선택2' :
-            foodEntity.append(dbResult[7])
+            user_dict[user_id].survey.foodEntity.append(dbResult[7])
             portion = dbResult[7]
         elif reqEntity == '빈도선택3':
-            foodEntity.append(dbResult[11])
+            user_dict[user_id].survey.foodEntity.append(dbResult[11])
             portion = dbResult[11]
+        
+        frequencyPerDay = user_dict[user_id].survey.foodFrequency[idx-1]
+        print(frequencyPerDay, portion, beforeFood['음식종류'])
 
-        freqperday = foodFrequency[surveyForm.foodIndex - 1]
+        calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'])
 
-        print(freqperday, portion, beforeFood['음식종류'])
+        if user_dict[user_id].survey.idx == len(foodListForSurvey):
+            # if user_dict[user_id].survey.idx == 4:
+            add_survey_result_to_excel(user_dict[user_id])
 
-        print(surveyForm.foodIndex)
-        print(len(foodListForSurvey))
-
-        calculateSolution(freqperday = freqperday, portion= portion, foodName= beforeFood['음식종류'])
-
-        if surveyForm.foodIndex == len(foodListForSurvey):
-            user_id = req["userRequest"]["user"]["id"]
-
-            user_info = [
-                user_id,
-                user_name,
-                age,
-                gender,
-                height,
-                weight,
-                exercise,
-                exerciseTime,
-                exerciseNum,
-                nutriSupplement,
-                nutriIntake
-            ]
-
-            print(foodFrequency, foodEntity)
-
-            add_survey_result_to_excel(
-                user_info=user_info,
-                user_food_frequency=foodFrequency,
-                user_food_entity=foodEntity )
-
-            solutionResultText = provideSolution(
-                energy = solution_칼로리,
-                carbo = solution_탄수화물, 
-                protein = solution_단백질, 
-                fat = solution_지방, 
-                sodium = solution_나트륨, 
-                calcium = solution_칼슘, 
-                vitaminC = solution_비타민C, 
-                SFA = solution_포화지방산
+            user_dict[user_id].solutionResultText = provideSolution(
+                user_id = user_id, 
+                energy = user_dict[user_id].solution_칼로리, 
+                carbo = user_dict[user_id].solution_탄수화물, 
+                protein = user_dict[user_id].solution_단백질, 
+                fat = user_dict[user_id].solution_지방, 
+                sodium = user_dict[user_id].solution_나트륨, 
+                calcium = user_dict[user_id].solution_칼슘, 
+                vitaminC = user_dict[user_id].solution_비타민C, 
+                SFA = user_dict[user_id].solution_포화지방산
             )
             
-            init_info()
+            # init_info() # 얘는 뭐징..?
             res = {
                 "version" : "2.0",
                 "template":{
@@ -610,13 +612,13 @@ def get1Frequency():
 
             return res   
 
-        nowFood = foodListForSurvey[surveyForm.foodIndex]
+        nowFood = foodListForSurvey[idx]
 
+    # 답변과 다음 설문조사지 만들기.
     print(foodFrequency, foodEntity)
-
     print("{foodName}에 대한 음식 섭취 빈도 조사 시작".format(foodName = nowFood["음식종류"]))
     
-    simpleText = "("+ str(surveyForm.foodIndex+1) + "/119)' {foodName}'을 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/119)' {foodName}'을 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -634,20 +636,15 @@ def get1Frequency():
 
     return res
 
-
-
 @app.route("/get1Entity", methods = ["GET", "POST"])
 def get1Entity():
-    global surveyForm
-    global foodFrequency
+    req = request.get_json()
+    user_id = req["userRequest"]["user"]["id"]
 
     print("1년 섭취 빈도 받기, 섭취량 시작 함수")
-    req = request.get_json()
-    print(req)
     frequency =  req["action"]["detailParams"]["식품섭취빈도조사선택지"]["value"] #식품섭취빈도
 
-    foodListForSurvey = 식이빈도조사_음식섭취양.find()
-    nowFood = foodListForSurvey[surveyForm.foodIndex]
+    nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
     simpleText = "선택하신 섭취 빈도는 {frequency} 입니다. \n'{foodName}'을 1회 섭취하실 때, 평균 섭취량을 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(frequency = frequency, foodName=nowFood["음식종류"])
     quickReplies = makeQuickRepliesForFoodEntity(nowFood)
@@ -665,37 +662,37 @@ def get1Entity():
         }
     }
 
-    freqperday = 0 # 하루 섭취량으로 변경
+    frequencyPerDay = 0 # 하루 섭취량으로 변경
 
     if frequency == '거의 안 먹음':
-        freqperday = 0
+        frequencyPerDay = 0
     elif frequency == '1개월 1번':
-        freqperday = 0.083
+        frequencyPerDay = 0.083
     elif frequency == '1개월 2-3번':
-        freqperday = 0.083
+        frequencyPerDay = 0.083
     elif frequency == '1주일 1번':
-        freqperday = 0.143
+        frequencyPerDay = 0.143
     elif frequency == '1주일 2-4번':
-        freqperday = 0.429
+        frequencyPerDay = 0.429
     elif frequency == '1주일 5-6번':
-        freqperday = 0.786
+        frequencyPerDay = 0.786
     elif frequency == '1일 1번':
-        freqperday = 1
+        frequencyPerDay = 1
     elif frequency == '1일 2번':
-        freqperday = 2
+        frequencyPerDay = 2
     elif frequency == '1일 3번':
-        freqperday = 3
+        frequencyPerDay = 3
     
 
-    surveyForm.foodIndex += 1
-    foodFrequency.append(freqperday)
-
+    user_dict[user_id].survey.idx += 1
+    user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
     return res
 
 @app.route("/serveSolution", methods = ["GET", "POST"])
 def serveSolution():
-    global solutionResultText
-    print(solutionResultText)
+    req = request.get_json()
+    user_id = req["userRequest"]["user"]["id"]
+    solutionResultText = user_dict[user_id].solutionResultText
 
     res = {
         "version" : "2.0",
@@ -721,20 +718,16 @@ def serveSolution():
 #------------------------------------------------------------------------관련 함수------------------------------------------------------------------------#
 
 # 설문 결과 엑셀로.
-def add_survey_result_to_excel(
-    user_info,
-    user_food_frequency,
-    user_food_entity,
-    ):
+def add_survey_result_to_excel(user: SurveyUser):
 
     now = str(datetime.now())
     excel_row = []
 
     excel_row.append(now)
-    for info in user_info:
+    for info in user.get_user_info():
         excel_row.append(info)
 
-    for frequency, entity in zip(user_food_frequency, user_food_entity):
+    for frequency, entity in zip(user.survey.foodFrequency, user.survey.foodFrequency):
         excel_row.append(frequency)
         excel_row.append(entity)
 
@@ -764,35 +757,25 @@ def makeQuickRepliesForFoodEntity(food):
 
 
 # 솔루션 계산 함수
-def calculateSolution(freqperday, portion, foodName):
+def calculateSolution(user_id,frequencyPerDay, portion, foodName):
     dbResult = str(식이빈도조사_단위영양성분.find_one({"음식종류" : foodName},{"_id" : False, "음식종류" : False})).replace(':','').replace(',','').replace('}','').split("'")
-    print(dbResult)
-    global solution_칼로리
-    global solution_탄수화물
-    global solution_단백질
-    global solution_지방
-    global solution_나트륨
-    global solution_칼슘
-    global solution_비타민C
-    global solution_포화지방산
-    print(solution_칼로리, solution_탄수화물, solution_단백질, solution_지방, solution_나트륨, solution_칼슘, solution_비타민C, solution_포화지방산)
-
+    
     # 솔루션을 위한 각 합 -> 이걸로 솔루션 제공 가능 
-    solution_칼로리 += freqperday * Fraction(portion) * float(dbResult[2])
-    solution_탄수화물 += freqperday * Fraction(portion) * float(dbResult[4])
-    solution_단백질 += freqperday * Fraction(portion) * float(dbResult[6])
-    solution_지방 += freqperday * Fraction(portion) * float(dbResult[8])
-    solution_나트륨 += freqperday * Fraction(portion) * float(dbResult[10])
-    solution_칼슘 += freqperday * Fraction(portion) * float(dbResult[12])
-    solution_비타민C += freqperday * Fraction(portion) * float(dbResult[14])
-    solution_포화지방산 += freqperday * Fraction(portion) * float(dbResult[16])
+    user_dict[user_id].solution_칼로리 += frequencyPerDay * Fraction(portion) * float(dbResult[2])
+    user_dict[user_id].solution_탄수화물 += frequencyPerDay * Fraction(portion) * float(dbResult[4])
+    user_dict[user_id].solution_단백질 += frequencyPerDay * Fraction(portion) * float(dbResult[6])
+    user_dict[user_id].solution_지방 += frequencyPerDay * Fraction(portion) * float(dbResult[8])
+    user_dict[user_id].solution_나트륨 += frequencyPerDay * Fraction(portion) * float(dbResult[10])
+    user_dict[user_id].solution_칼슘 += frequencyPerDay * Fraction(portion) * float(dbResult[12])
+    user_dict[user_id].solution_비타민C += frequencyPerDay * Fraction(portion) * float(dbResult[14])
+    user_dict[user_id].solution_포화지방산 += frequencyPerDay * Fraction(portion) * float(dbResult[16])
     
     print(solution_칼로리, solution_탄수화물, solution_단백질, solution_지방, solution_나트륨, solution_칼슘, solution_비타민C, solution_포화지방산)
 
 # 솔루션 그래프 + 줄글 제공
-def provideSolution(energy, carbo, protein, fat, sodium, calcium, vitaminC, SFA):
-    global age
-    global user_name
+def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitaminC, SFA):
+    age = user_dict[user_id].age
+    user_name = user_dict[user_id].user_name
     # 탄단지 비율 구하기
     carboRatio = round(carbo * 4 / (carbo*4 + protein * 4 + fat * 9), 2)
     proteinRatio = round(protein *4 / (carbo*4 + protein * 4 + fat * 9),2)
@@ -887,7 +870,7 @@ def provideSolution(energy, carbo, protein, fat, sodium, calcium, vitaminC, SFA)
 
     totalSolution = "본 솔루션은 영양제와 운동량 정보를 포함하지 않습니다.\n\n▶ 영양 평가는 " + user_name + "님께서 기록하신 최근 1년 동안 섭취한 음식들의 빈도로 분석한 영양평가입니다. \n따라서 기록하신 최근 1년 동안의 식사섭취가 본인의 평소 식사와 같았는지, 아니면 어떻게 달랐는지를 생각하면서 영양평가를 참고하시어 건강한 식생활을 유지하시기 바랍니다."
 
-    ratioSolution = "\n▶ 영양 권장량 대비 섭취 비율입니다.\n한국인의 3대 열량 영양소의 권장 섭취 비율은 [탄수화물: 단백질: 지방 = 55-65: 7-20: 15-30] 입니다.\n귀하의 최근 1년 동안의 식품 섭취 빈도조사에 따른 평균 열량 영양소 섭취 비율은 다음과 같습니다.\n열량(kcal) : " + str(round(energy,3)) + "\n탄수화물(g) : " + str(carboRatio * 100) + "%\n지방(g) : " + str(fatRatio * 100) + "%\n단백질(g) : " + str(proteinRatio*100) + "%"
+    ratioSolution = "\n▶ 영양 권장량 대비 섭취 비율입니다.\n한국인의 3대 열량 영양소의 권장 섭취 비율은 [탄수화물: 단백질: 지방 = 55-65: 7-20: 15-30] 입니다.\n귀하의 최근 1년 동안의 식품 섭취 빈도조사에 따른 평균 열량 영양소 섭취 비율은 다음과 같습니다.\n열량(kcal) : " + str(round(energy,3)) + "\n탄수화물(g) : " + str(round(carboRatio * 100,2)) + "%\n지방(g) : " + str(round(fatRatio * 100,2)) + "%\n단백질(g) : " + str(round(proteinRatio*100,2)) + "%"
 
     resultSolution = "\n▶ 영양소별 평가 결과입니다.\n열량은 에너지필요추정량(" + str(val_calorie) + "kcal) 기준으로 " + str(printEnergySolution) + "하게 섭취하셨습니다.\n단백질은 권장섭취량(" + str(val_protein) + "g)을 기준으로 " + str(printProteinSolution) + "하게 섭취하셨습니다.\n포화지방의 경우 에너지적정비율(" + str(saturatedFat) + "%)기준으로 " + str(printSFASolution) + "하게 섭취하셨습니다.\n나트륨은 만성질환위험감소섭취량(" + str(val_sodium) + "mg)을 기준으로 " + str(printSodiumSolution) + "하게 섭취하셨습니다."
 
@@ -971,7 +954,7 @@ def start():
                  }
                }
     print(foodArr)
-    return jsonify(res)
+    return res
 
 @app.route("/photoFood", methods = ["GET", "POST"])
 def photoFood():
@@ -1169,34 +1152,43 @@ def solution():
 
     res = {
         "version" : "2.0",
-        "template": {
-            "outputs" : [
+        "template":{
+            "outputs": [
                 {
-                    "simpleText" : {
-                        "text": answer
+                    "simpleText": {
+                        "text" : answer
                     }
                 }
-            ],
+            ], "quickReplies": [{
+                    "messageText" : "시작",
+                    "action": "message",
+                    "label" : "종료",
+                }
+            ]
         }
     }
+
     print(answer)
 
-    return jsonify(res)
+    return res
 
 def provideDaySolution(userID, energy, carbo, protein, fat, sodium, calcium, vitaminC, SFA):
     df = None
     print('일간 식단 솔루션 제공')
-    try:
-        df = pd.read_excel("./data/1년섭취빈도조사.xlsx", engine='openpyxl')
-        userDF = df[df.UserID == userID]
+    # try:
+    #     df = pd.read_excel("./data/1년섭취빈도조사.xlsx", engine='openpyxl')
+    #     userDF = df[df.UserID == userID]
 
-        age = userDF.at[0, '나이']
-        user_name = userDF.at[0, '이름']
+    #     age = userDF.at[0, '나이']
+    #     user_name = userDF.at[0, '이름']
 
-        print(age, user_name)
+    #     print(age, user_name)
         
-    except:
-        result = "사용자님의 정보가 존재하지 않습니다.\n'홈'메뉴의 '챗봇 시작하기'를 눌러 1년 섭취량 기준 솔루션을 먼저 제공받아주세요."
+    # except:
+    #     result = "사용자님의 정보가 존재하지 않습니다.\n'홈'메뉴의 '챗봇 시작하기'를 눌러 1년 섭취량 기준 솔루션을 먼저 제공받아주세요."
+
+    global age
+    global user_name
 
     # 탄단지 비율 구하기
     carboRatio = round(carbo * 4 / (carbo*4 + protein * 4 + fat * 9), 2)
