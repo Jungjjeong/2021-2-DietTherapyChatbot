@@ -10,11 +10,21 @@ class SurveyUser():
         self.height = 0
         self.weight = 0
         self.exercise = ""
-        self.exerciseTime = ""
+        self.exerciseTypeNum = 0
+        self.exerciseWeight = 0
+        self.exerciseIdx = 0
+        self.exerciseTimeHour = ""
+        self.exerciseTimeMin = ""
         self.exerciseNum = ""
+        self.nutriTypeNum = 0
+        self.nutriIdx = 0
         self.nutriSupplement = ""
+        self.nutriCompany = ""
+        self.nutriTerm = ""
+        self.nutriFrequency = ""
         self.nutriIntake = ""
         self.survey = SurveyForm()
+        self.PAL = 7.7
 
         self.solution_칼로리 = 0
         self.solution_탄수화물 = 0
@@ -24,6 +34,7 @@ class SurveyUser():
         self.solution_비타민C = 0
         self.solution_포화지방산 = 0
         self.solution_칼슘 = 0
+        self.solution_포화지방산_상위 = []
 
         self.solutionResultText = ""
 
@@ -59,8 +70,18 @@ class SurveyUser():
             self.height,
             self.weight,
             self.exercise,
-            self.exerciseTime,
+            self.exerciseTypeNum,
+            self.exerciseWeight,
+            self.exerciseIdx,
+            self.exerciseTimeHour,
+            self.exerciseTimeMin,
             self.exerciseNum,
+            self.nutriTypeNum,
+            self.nutriIdx,
             self.nutriSupplement,
+            self.nutriCompany,
+            self.nutriTerm,
+            self.nutriFrequency,
             self.nutriIntake,
+            self.PAL
         ]
