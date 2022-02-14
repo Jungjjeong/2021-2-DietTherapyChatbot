@@ -20,7 +20,7 @@ cluster = MongoClient("mongodb+srv://user:0000@cluster0.uio0y.mongodb.net/myFirs
 db = cluster["DietTherapy"]
 음식영양성분 = db["음식영양성분"]
 음식섭취양 = db["음식섭취양"]
-식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양"]
+식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양2"]
 식이빈도조사_단위영양성분 = db["식이빈도조사_단위영양성분"]
 user_dict = {} # SurveyUser 객체가 들어감. 
 
@@ -628,9 +628,9 @@ def ExerciseCheck():
     exerciseTimeTotal = (exerciseTimeHour*60 + exerciseTimeMin)*exerciseNum
 
     if user_dict[user_id].gender == '남자' :
-        BEE = 293-3.8*user_dict[user_id].age + 456.4*(user_dict[user_id].height/100) + 10.12*user_dict[user_id].weight
+        BEE = 293 - (3.8*user_dict[user_id].age) + (456.4*(user_dict[user_id].height/100)) + (10.12*user_dict[user_id].weight)
     elif user_dict[user_id].gender == '여자' :
-        BEE = 247-2.67*user_dict[user_id].age + 401.5*(user_dict[user_id].height/100) + 8.6*user_dict[user_id].weight
+        BEE = 247 - (2.67*user_dict[user_id].age) + (401.5*(user_dict[user_id].height/100)) + (8.6*user_dict[user_id].weight)
 
     PAL = ((user_dict[user_id].exerciseWeight-1) * ((1.15/0.9)*exerciseTimeTotal)/1440*7) / (BEE*7/(0.0175*1440*user_dict[user_id].weight))
 
@@ -1022,6 +1022,7 @@ def get1Frequency():
         reqEntity = req["action"]["detailParams"]["섭취양선택지"]["value"]
         beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
         portion = 0
+        weightval = 0
 
         dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
         print(dbResult)
@@ -1034,11 +1035,13 @@ def get1Frequency():
         elif reqEntity == '빈도선택3':
             user_dict[user_id].survey.foodEntity.append(dbResult[11])
             portion = dbResult[11]
+        weightval = dbResult[19]
+        print(weightval)
         
         frequencyPerDay = user_dict[user_id].survey.foodFrequency[idx-1]
         print(frequencyPerDay, portion, beforeFood['음식종류'])
 
-        calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'])
+        calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
 
         if user_dict[user_id].survey.idx == len(foodListForSurvey):
         #if user_dict[user_id].survey.idx == 5:
@@ -1223,24 +1226,23 @@ def makeQuickRepliesForFoodEntity(food):
 
 
 # 솔루션 계산 함수
-def calculateSolution(user_id, frequencyPerDay, portion, foodName):
+def calculateSolution(user_id, frequencyPerDay, portion, foodName, weightval):
     dbResult = str(식이빈도조사_단위영양성분.find_one({"음식종류" : foodName},{"_id" : False, "음식종류" : False})).replace(':','').replace(',','').replace('}','').split("'")
     print(dbResult)
 
-    print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2])))
-
     # 솔루션을 위한 각 합 -> 이걸로 솔루션 제공 가능 
-    user_dict[user_id].solution_칼로리 += frequencyPerDay * Fraction(portion) * float(dbResult[2])
-    user_dict[user_id].solution_탄수화물 += frequencyPerDay * Fraction(portion) * float(dbResult[4])
-    user_dict[user_id].solution_단백질 += frequencyPerDay * Fraction(portion) * float(dbResult[6])
-    user_dict[user_id].solution_지방 += frequencyPerDay * Fraction(portion) * float(dbResult[8])
-    user_dict[user_id].solution_나트륨 += frequencyPerDay * Fraction(portion) * float(dbResult[10])
-    user_dict[user_id].solution_칼슘 += frequencyPerDay * Fraction(portion) * float(dbResult[12])
-    user_dict[user_id].solution_비타민C += frequencyPerDay * Fraction(portion) * float(dbResult[14])
+    user_dict[user_id].solution_칼로리 += frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)
+    user_dict[user_id].solution_탄수화물 += frequencyPerDay * Fraction(portion) * float(dbResult[4]) * Fraction(weightval)
+    user_dict[user_id].solution_단백질 += frequencyPerDay * Fraction(portion) * float(dbResult[6]) * Fraction(weightval)
+    user_dict[user_id].solution_지방 += frequencyPerDay * Fraction(portion) * float(dbResult[8]) * Fraction(weightval)
+    user_dict[user_id].solution_나트륨 += frequencyPerDay * Fraction(portion) * float(dbResult[10]) * Fraction(weightval)
+    user_dict[user_id].solution_칼슘 += frequencyPerDay * Fraction(portion) * float(dbResult[12]) * Fraction(weightval)
+    user_dict[user_id].solution_비타민C += frequencyPerDay * Fraction(portion) * float(dbResult[14]) * Fraction(weightval)
     fat = frequencyPerDay * Fraction(portion) * float(dbResult[16])
     user_dict[user_id].solution_포화지방산 += fat
     user_dict[user_id].solution_포화지방산_상위.append([fat, foodName])
     
+    print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)))
     print(user_dict[user_id].solution_칼로리, user_dict[user_id].solution_탄수화물, user_dict[user_id].solution_단백질, user_dict[user_id].solution_지방, user_dict[user_id].solution_나트륨, user_dict[user_id].solution_칼슘, user_dict[user_id].solution_비타민C,  user_dict[user_id].solution_포화지방산)
 
 # 솔루션 그래프 + 줄글 제공
@@ -1397,9 +1399,9 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
 def calculateRatio(carbo, protein, fat): # 탄단지 비율별 솔루션 계산
 
     # 탄단지 비율 구하기
-    carboRatio = round((carbo * 4 / (carbo*4 + protein * 4 + fat * 9))*100,)
-    proteinRatio = round((protein *4 / (carbo*4 + protein * 4 + fat * 9))*100,)
-    fatRatio = round((fat*9 / (carbo*4 + protein * 4 + fat * 9))*100,)
+    carboRatio = round((carbo * 4 / (carbo*4 + protein * 4 + fat * 9))*100,0)
+    proteinRatio = round((protein *4 / (carbo*4 + protein * 4 + fat * 9))*100,0)
+    fatRatio = round((fat*9 / (carbo*4 + protein * 4 + fat * 9))*100,0)
 
     print(carboRatio, proteinRatio, fatRatio)
 
@@ -1438,21 +1440,21 @@ def calculateEnergy(user_id, energy): # 영양소별 솔루션 계산 - 열량
 
     PA = 0
 
-    if user_dict[user_id].gender == "여자":
+    if user_dict[user_id].gender == "남자":
         if user_dict[user_id].PAL >= 13.3 : PA = 1.48
         elif user_dict[user_id].PAL >= 11.2 : PA = 1.25
         elif user_dict[user_id].PAL >= 9.8 : PA = 1.11
         elif user_dict[user_id].PAL >= 7 : PA = 1
 
-        EER = round((662-9.53*user_dict[user_id].age + PA*(15.91*user_dict[user_id].weight + 539.6*user_dict[user_id].height)),0)
+        EER = round( (662 - (9.53*user_dict[user_id].age) + (PA* ((15.91*user_dict[user_id].weight) + (539.6*user_dict[user_id].height/100)))) ,0)
 
-    elif user_dict[user_id].gender == "남자":
+    elif user_dict[user_id].gender == "여자":
         if user_dict[user_id].PAL >= 13.3 : PA = 1.45
         elif user_dict[user_id].PAL >= 11.2 : PA = 1.27
         elif user_dict[user_id].PAL >= 9.8 : PA = 1.12
         elif user_dict[user_id].PAL >= 7 : PA = 1
 
-        EER = round((354-6.91*user_dict[user_id].age + PA*(9.36*user_dict[user_id].weight + 726*user_dict[user_id].height)),0)
+        EER = round( (354 - (6.91*user_dict[user_id].age) + (PA* ((9.36*user_dict[user_id].weight) + (726*user_dict[user_id].height/100)))) ,0)
 
     if energy < EER * 0.9:
         return ["부족", EER]
