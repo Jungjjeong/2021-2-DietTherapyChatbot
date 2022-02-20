@@ -20,12 +20,7 @@ excel_column = ["날짜",
         "나이",
         "성별",
         "키",
-        "몸무게",
-        "운동",
-        "운동 시간",
-        "운동 횟수",
-        "영양제",
-        "영양제섭취"]
+        "몸무게"]
 
 all = 식이빈도조사_음식섭취양.find()
 
@@ -33,10 +28,22 @@ for food in all:
     excel_column.append(food["음식종류"] + "_freqperday")
     excel_column.append(food["음식종류"] + "_portion")
 
-print(excel_column)    
 
-try:
-    df = pd.read_excel("./data/1년섭취빈도조사.xlsx", engine='openpyxl')
-except:
-    df = pd.DataFrame(columns=excel_column)
-    df.to_excel("./data/1년섭취빈도조사.xlsx",index=False)
+for exercise in range(5):
+    excel_column.append("운동"+str(exercise+1))
+    excel_column.append("운동시간"+str(exercise+1))
+    excel_column.append("운동횟수"+str(exercise+1))
+
+# print(excel_column)    
+
+df = pd.DataFrame(columns=excel_column)
+df.to_excel('/home/user/jiyoung/DietTheraphyChatbot/data/1년섭취빈도조사_운동량포함.xlsx', sheet_name='food&exercise', index=False)
+print(df) 
+
+
+
+# try:
+#     df = pd.read_excel("./data/1년섭취빈도조사1.xlsx", engine='openpyxl')
+# except:
+#     df = pd.DataFrame(columns=excel_column)
+#     df.to_excel("./data/1년섭취빈도조사1.xlsx",index=False)

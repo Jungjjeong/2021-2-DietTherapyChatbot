@@ -15,6 +15,7 @@ class SurveyUser():
         self.exerciseIdx = 0
         self.exerciseTimeHour = ""
         self.exerciseTimeMin = ""
+        self.exerciseTime = ""
         self.exerciseNum = ""
         self.nutriTypeNum = 0
         self.nutriIdx = 0
@@ -68,20 +69,21 @@ class SurveyUser():
             self.age,
             self.gender,
             self.height,
-            self.weight,
+            self.weight
+        ]
+    
+    def get_user_exercise_info(self) -> list:
+        return [
             self.exercise,
-            self.exerciseTypeNum,
-            self.exerciseWeight,
-            self.exerciseIdx,
-            self.exerciseTimeHour,
-            self.exerciseTimeMin,
-            self.exerciseNum,
-            self.nutriTypeNum,
-            self.nutriIdx,
-            self.nutriSupplement,
+            self.exerciseTime,
+            self.exerciseNum
+        ]
+
+    def get_user_nutri_info(self) -> list:
+        return [
+            self.NutriSupplement,
             self.nutriCompany,
             self.nutriTerm,
             self.nutriFrequency,
-            self.nutriIntake,
-            self.PAL
+            self.nutriIntake
         ]

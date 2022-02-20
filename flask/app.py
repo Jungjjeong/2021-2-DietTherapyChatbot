@@ -1,3 +1,4 @@
+from stat import SF_ARCHIVED
 from flask import Flask, json, request, jsonify
 from datetime import datetime
 import pandas as pd
@@ -20,7 +21,7 @@ cluster = MongoClient("mongodb+srv://user:0000@cluster0.uio0y.mongodb.net/myFirs
 db = cluster["DietTherapy"]
 음식영양성분 = db["음식영양성분"]
 음식섭취양 = db["음식섭취양"]
-식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양2"]
+식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양"]
 식이빈도조사_단위영양성분 = db["식이빈도조사_단위영양성분"]
 user_dict = {} # SurveyUser 객체가 들어감. 
 
@@ -160,7 +161,7 @@ def getGender():
 
 
 @app.route("/getHeight", methods = ["GET", "POST"]) 
-def Height():
+def getHeight():
     req = request.get_json()
 
     print(req)
@@ -191,7 +192,7 @@ def Height():
 
 
 @app.route("/getWeight", methods = ["GET", "POST"]) 
-def Weight():
+def getWeight():
     req = request.get_json()
 
     print(req)
@@ -256,7 +257,7 @@ def Weight():
 
 
 @app.route("/getExerciseType", methods = ["GET", "POST"]) 
-def ExerciseType():
+def getExerciseType():
     print("운동 개수를 받는 함수")
 
     req = request.get_json()
@@ -297,7 +298,7 @@ def ExerciseType():
     
 
 @app.route("/getExercise", methods = ["GET", "POST"]) 
-def Exercise():
+def getExercise():
     print("1회 운동시간 정보 받는 함수")
     exercise = ''
     req = request.get_json()
@@ -431,7 +432,7 @@ def Exercise():
 
 
 @app.route("/getExerciseTimeHour", methods = ["GET", "POST"]) 
-def ExerciseTimeHour():
+def getExerciseTimeHour():
     print("운동 이름 정보 받는 함수")
     req = request.get_json()
 
@@ -484,7 +485,7 @@ def ExerciseTimeHour():
     return jsonify(res)
 
 @app.route("/getExerciseTimeMin", methods = ["GET", "POST"]) 
-def ExerciseTimeMin():
+def getExerciseTimeMin():
     print("1회 운동 시간 (분단위) 정보 받는 함수")
     req = request.get_json()
 
@@ -510,7 +511,7 @@ def ExerciseTimeMin():
     return jsonify(res)
 
 @app.route("/getExerciseNum", methods = ["GET", "POST"]) 
-def ExerciseNum():
+def getExerciseNum():
     print("주당 운동 횟수 정보 받는 함수")
     req = request.get_json()
     print(req)
@@ -519,7 +520,9 @@ def ExerciseNum():
     exerciseNum =  req["action"]["detailParams"]["횟수"]["value"] #주당 운동 횟수
     print(exerciseNum)
     user_dict[user_id].exerciseNum = exerciseNum
+
     exerciseTime = user_dict[user_id].exerciseTimeHour + user_dict[user_id].exerciseTimeMin
+    user_dict[user_id].exerciseTime = exerciseTime
 
     res = {
             "version" : "2.0",
@@ -568,7 +571,7 @@ def ExerciseNum():
 
 
 @app.route("/getExerciseCheck", methods = ["GET", "POST"]) 
-def ExerciseCheck():
+def getExerciseCheck():
     print("입력받은 운동 정보가 맞는지 확인하고 인덱스를 증가시키는 함수")
     req = request.get_json()
     print(req)
@@ -578,6 +581,13 @@ def ExerciseCheck():
     user_dict[user_id].exerciseIdx+=1
     print(user_dict[user_id].exerciseIdx)
     print(user_dict[user_id].exerciseTypeNum)
+
+    user_dict[user_id].survey.exercise.append(user_dict[user_id].exercise)
+    user_dict[user_id].survey.exerciseTime.append(user_dict[user_id].exerciseTime)
+    user_dict[user_id].survey.exerciseNum.append(user_dict[user_id].exerciseNum)
+    print(user_dict[user_id].survey.exercise)
+    print(user_dict[user_id].survey.exerciseTime)
+    print(user_dict[user_id].survey.exerciseNum)
 
     if user_dict[user_id].exerciseIdx==user_dict[user_id].exerciseTypeNum:
         print('if 들어옴')
@@ -641,7 +651,7 @@ def ExerciseCheck():
 
 
 @app.route("/getNutriNum", methods = ["GET", "POST"]) 
-def NutriNum():
+def getNutriNum():
     print("영양제 가짓수 받는 함수")
     req = request.get_json()
 
@@ -651,7 +661,7 @@ def NutriNum():
     nutriReq =  req["action"]["detailParams"]["nutriNum"]["value"] #영양제 종류(개수)
     print(nutriReq)
 
-    nutriTypeNum = int(re.sub('\D','', nutriReq)) #nutritype to num for loop
+    nutriTypeNum = int(nutriReq.replace("가지","")) #nutritype to num for loop
     # print(nutriTypeNum)
 
     user_dict[user_id].nutriTypeNum = nutriTypeNum
@@ -679,40 +689,12 @@ def NutriNum():
             }
         }    
 
-    # if user_dict[user_id].nutriIdx == 0:
-    #     res = {
-    #         "version" : "2.0",
-    #         "template":{
-    #             "outputs": [
-    #                 {
-    #                     "simpleText": {
-    #                         "text" : "입력하신 식이보충제는 " + str(user_dict[user_id].nutriTypeNum) + "입니다. 😊\n\n" + str(user_dict[user_id].nutriIdx+1) + "번째 식이보충제의 정확한 제품명을 기입해주세요."
-    #                     }
-    #                 }
-    #             ]
-    #         }
-    #     }
-    # else:
-    #     res = {
-    #         "version" : "2.0",
-    #         "template":{
-    #             "outputs": [
-    #                 {
-    #                     "simpleText": {
-    #                         "text" :  str(user_dict[user_id].nutriIdx) + "번째 식이보충제의 정확한 제품명을 기입해주세요."
-    #                     }
-    #                 }
-    #             ]
-    #         }
-    #     }
-
-
     print(user_dict[user_id])
     return jsonify(res)
 
 
 @app.route("/getNutri", methods = ["GET", "POST"]) 
-def Nutri():
+def getNutri():
     print("영양제 이름, 제조회사, 복용기간, 복용빈도, 복용분량 받는 함수")
     
     req = request.get_json()
@@ -790,7 +772,7 @@ def Nutri():
 
 
 @app.route("/getNutriIndex", methods = ["GET", "POST"]) 
-def NutriIndex():
+def getNutriIndex():
     print("입력받은 식이보충제 정보가 맞을 경우 인덱스를 증가시키는 함수")
     req = request.get_json()
     print(req)
@@ -801,8 +783,14 @@ def NutriIndex():
     print(user_dict[user_id].nutriIdx)
     print(user_dict[user_id].nutriTypeNum)
 
+    user_dict[user_id].survey.nutriSupplement.append(user_dict[user_id].nutriSupplement)
+    user_dict[user_id].survey.nutriCompany.append(user_dict[user_id].nutriCompany)
+    user_dict[user_id].survey.nutriTerm.append(user_dict[user_id].nutriTerm)
+    user_dict[user_id].survey.nutriFrequency.append(user_dict[user_id].nutriFrequency)
+    user_dict[user_id].survey.nutriIntake.append(user_dict[user_id].nutriIntake)
+
     if user_dict[user_id].nutriIdx==user_dict[user_id].nutriTypeNum:
-        print('if 들어옴')
+        add_nutri_result_to_excel(user_dict[user_id], user_id)
 
         res = {
             "version" : "2.0",
@@ -810,14 +798,14 @@ def NutriIndex():
                 "outputs": [
                     {
                         "simpleText": {
-                            "text" : "식이보충제 조사를 종료합니다."
+                            "text" : "식이보충제 조사를 종료합니다.\n모든 문항에 대한 검사가 완료되었습니다.\n감사합니다.\n\n결과 집계까지 시간이 소요되니 잠시 기다려주세요."
                         }
                     }
                 ], "quickReplies": [
                     {
-                        "messageText" : "종료",
+                        "messageText" : "1년섭취빈도조사종료",
                         "action": "message",
-                        "label" : "식이보충제조사종료"
+                        "label" : "종료"
                     }
                 ]
             }
@@ -852,7 +840,7 @@ from PIL import Image
 
 # 사진 전송 요구 + 사진 클라우드 링크 받아오는 함수 
 @app.route("/getNutriPhoto", methods=["GET", "POST"])
-def nutriPhoto():
+def getnutriPhoto():
     print("식이보충제 사진을 받는 함수")
     
     req = request.get_json()
@@ -874,9 +862,10 @@ def nutriPhoto():
         
     urllib._urlopener = AppURLopener()
 
-    img_name = user_dict[user_id].user_name
+    img_path = "/home/user/jiyoung/share_data/pictures/" + user_dict[user_id].user_name + str(datetime.now())
+    # img_path = user_dict[user_id].user_name + str(datetime.now())
 
-    urllib._urlopener.retrieve(nutri_u, img_name + ".jpg")
+    urllib._urlopener.retrieve(nutri_u, img_path + ".jpg")
     # urlretrieve_img = Image.open("test.jpg") # 저장된 이미지 확인
 
     # upload = {'image': open('/home/user/jiyoung/flask/test.jpg', 'rb')} # 업로드하기위한 파일
@@ -904,106 +893,12 @@ def nutriPhoto():
     return res
 
 
-# @app.route("/getNutriIntake", methods = ["GET", "POST"]) 
-# def nutriIntake():
-
-#     print("영양제 섭취량 받는 함수")
-
-#     req = request.get_json()
-#     print(req)
-    
-#     nutriIntake = ""
-#     user_id = req["userRequest"]["user"]["id"]
-#     nutriIntakeStr =  req["action"]["detailParams"]["영양제선택지"]["value"] #영양제 복용량
-    
-    # res = {
-    #     "version" : "2.0",
-    #     "template":{
-    #         "outputs": [
-    #             {
-    #                 "simpleText": {
-    #                     "text" : "입력하신 영양제의 이름은 " + nutriSupplement + "입니다.\n\n해당 영양제의 하루 섭취 횟수를 선택해주세요.\n섭취하시는 횟수가 없으시면 기타를 눌러주세요."
-    #                 }
-    #             }
-    #         ], "quickReplies": [
-    #             {
-    #                 "messageText" : "영양제선택1",
-    #                 "action": "message",
-    #                 "label" : "1알(포)"
-    #             },{
-    #                 "messageText" : "영양제선택2",
-    #                 "action": "message",
-    #                 "label" : "2알(포)"
-    #             },{
-    #                 "messageText" : "영양제선택3",
-    #                 "action": "message",
-    #                 "label" : "3알(포)"
-    #             },{
-    #                 "messageText" : "영양제기타",
-    #                 "action": "message",
-    #             }
-    #         ]
-    #     }
-    # }
-
-
-#     if nutriIntakeStr == "영양제선택1":
-#         nutriIntake = "1알(포)"
-#     elif nutriIntakeStr == "영양제선택2":
-#         nutriIntake = "2알(포)"
-#     elif nutriIntakeStr == "영양제선택3":
-#         nutriIntake == "3알(포)"
-
-#     user_dict[user_id].nutriIntake = nutriIntake
-
-#     res = {
-#         "version" : "2.0",
-#         "template":{
-#             "outputs": [
-#                 {
-#                     "itemCard": {
-#                         "title": "종합 정보",
-#                         "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
-#                         "itemList": [
-#                             {
-#                                 "title": "영양제 이름",
-#                                 "description": user_dict[user_id].nutriSupplement
-#                             },
-#                             {
-#                                 "title": "하루 섭취량",
-#                                 "description": user_dict[user_id].nutriIntake
-#                             }
-#                         ],
-#                         "itemListAlignment" : "left",
-#                         "buttons": [
-#                             {
-#                                 "action": "message",
-#                                 "label": "맞습니다",
-#                                 "messageText": "식품섭취빈도조사"
-#                             },
-#                             {
-#                                 "action":  "message",
-#                                 "label": "재입력",
-#                                 "messageText": "영양제"
-#                             }
-#                         ],
-#                         "buttonLayout" : "vertical"
-#                     }
-#                 }
-#             ]
-#         }
-#     }
-
-#     print(user_dict[user_id])
-#     return jsonify(res)
-
-
 # ---------------------------------------식품섭취 빈도 시작 -----------------------------------------------
 
 import constant
 
 foodListForSurvey = list(식이빈도조사_음식섭취양.find())
-print(foodListForSurvey)
+# print(foodListForSurvey)
 
 @app.route("/get1Frequency", methods = ["GET", "POST"])
 def get1Frequency():
@@ -1044,8 +939,8 @@ def get1Frequency():
         calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
 
         if user_dict[user_id].survey.idx == len(foodListForSurvey):
-        #if user_dict[user_id].survey.idx == 5:
-            add_survey_result_to_excel(user_dict[user_id])
+        # if user_dict[user_id].survey.idx == 4:
+            add_survey_result_to_excel2(user_dict[user_id], user_id)
 
             user_dict[user_id].solutionResultText = provideSolution(
                 user_id = user_id, 
@@ -1066,14 +961,13 @@ def get1Frequency():
                     "outputs": [
                         {
                             "simpleText": {
-                                "text" : "모든 문항에 대한 검사가 완료되었습니다.\n감사합니다.\n\n결과 집계까지 시간이 소요되니 잠시 기다려주세요."
+                                "text" : "식품 섭취 빈도 조사가 완료되었습니다.\n영양제 조사를 시작하려면 '시작하기' 버튼을 눌러주세요."
                             }
                         }
                     ], "quickReplies": [{
-                            "messageText" : "1년섭취빈도조사종료",
+                            "messageText" : "영양제",
                             "action": "message",
-                            "label" : "1년섭취빈도조사종료",
-                            "messageText": "1년섭취빈도조사종료"
+                            "label" : "영양제조사시작",
                         }
                     ]
                 }
@@ -1114,8 +1008,13 @@ def get1Entity():
     frequency =  req["action"]["detailParams"]["식품섭취빈도조사선택지"]["value"] #식품섭취빈도
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
+    beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
-    simpleText = "선택하신 섭취 빈도는 {frequency} 입니다. \n'{foodName}'을 1회 섭취하실 때, 평균 섭취량을 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(frequency = frequency, foodName=nowFood["음식종류"])
+    dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
+    norm = dbResult[23]
+
+    simpleText = "선택하신 섭취 빈도는 {frequency} 입니다. \n'{foodName}'을 1회 섭취하실 때, 평균 섭취량을 선택해 주세요.\n기준분량(1회 평균섭취량)은 {norm} 입니다. 선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(frequency = frequency, foodName=nowFood["음식종류"], norm = norm)
+    print(simpleText)
     quickReplies = makeQuickRepliesForFoodEntity(nowFood)
 
     res = {
@@ -1208,6 +1107,63 @@ def add_survey_result_to_excel(user: SurveyUser):
     df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
     df.to_excel("./data/1년섭취빈도조사.xlsx", index=False)
 
+def add_survey_result_to_excel2(user: SurveyUser, user_id):
+
+    now = str(datetime.now())
+    excel_row = []
+
+    excel_row.append(now)
+    for info in user.get_user_info():
+        excel_row.append(info)
+    
+    print(excel_row)
+
+    for frequency, entity in zip(user.survey.foodFrequency, user.survey.foodFrequency):
+        excel_row.append(frequency)
+        excel_row.append(entity)
+
+    for name, time, number in zip(user.survey.exercise, user.survey.exerciseTime, user.survey.exerciseNum):
+        excel_row.append(name)
+        excel_row.append(time)
+        excel_row.append(number)
+
+    while len(excel_row) < 260:
+        excel_row.append("응답 없음")
+
+    df = None
+    df = pd.read_excel("./data/1년섭취빈도조사_운동량포함.xlsx", engine='openpyxl')
+    print(df.columns)
+
+
+    df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
+    df.to_excel("./data/1년섭취빈도조사_운동량포함.xlsx", index=False)
+
+
+def add_nutri_result_to_excel(user: SurveyUser, user_id):
+
+    now = str(datetime.now())
+    excel_row = []
+
+    excel_row.append(now)
+    for info in user.get_user_info():
+        excel_row.append(info)
+
+    for name, company, term, frequency, intake in zip(user.survey.nutriSupplement, user.survey.nutriCompany, user.survey.nutriTerm,  user.survey.nutriFrequency,  user.survey.nutriIntake):
+        excel_row.append(name)
+        excel_row.append(company)
+        excel_row.append(term)
+        excel_row.append(frequency)
+        excel_row.append(intake)
+
+    while len(excel_row) < 42:
+        excel_row.append("응답 없음")
+
+    df2 = None
+    df2 = pd.read_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_식이보충제.xlsx", engine='openpyxl')
+    df2 = df2.append(pd.Series(excel_row, index=df2.columns) , ignore_index=True)
+    df2.to_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_식이보충제.xlsx", index=False)
+
+
 def init_info():
     pass
 
@@ -1242,7 +1198,7 @@ def calculateSolution(user_id, frequencyPerDay, portion, foodName, weightval):
     user_dict[user_id].solution_포화지방산 += fat
     user_dict[user_id].solution_포화지방산_상위.append([fat, foodName])
     
-    print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)))
+    # print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)))
     print(user_dict[user_id].solution_칼로리, user_dict[user_id].solution_탄수화물, user_dict[user_id].solution_단백질, user_dict[user_id].solution_지방, user_dict[user_id].solution_나트륨, user_dict[user_id].solution_칼슘, user_dict[user_id].solution_비타민C,  user_dict[user_id].solution_포화지방산)
 
 # 솔루션 그래프 + 줄글 제공
@@ -1284,15 +1240,16 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
 
     resultEnergy = calculateEnergy(user_id, energy)
     valEnergy = resultEnergy[1]
+    energyPercent = resultEnergy[2]
 
     if resultEnergy[0] == "부족":
-        nutriSolution += "-열량(부족⬇️) : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal) 미만으로 부족하게 섭취하셨습니다.\n"
+        nutriSolution += "- 열량 | " + str(round(energy)) + "kcal | 부족⬇️ : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal)의 " + str(energyPercent) + "% 수준으로 부족하게 섭취하셨습니다.\n"
         intakeSolution += "- ⬆️식사량 늘리기\n"
         totalSolution += "평소에도 기록하신 것과 동일하게 식사하신다면 전체적인 식사량을 늘리시기 바랍니다.\n"
     elif resultEnergy[0] == "적절":
-        nutriSolution += "-열량(적절✅) : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal)과  비교하여 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 열량 | " + str(round(energy)) + "kcal | 적절✅ : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal)의 " + str(energyPercent) + "% 수준으로 적절하게 섭취하셨습니다.\n"
     elif resultEnergy[0] == "초과":
-        nutriSolution += "-열량(과다⬆️) : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal)을 초과하여 섭취하셨습니다.\n"
+        nutriSolution += "- 열량 | " + str(round(energy)) + "kcal | 과다⬆️ : 열량은 에너지필요추정량(" + str(valEnergy) + "kcal)의 " + str(energyPercent) + "% 수준으로 초과하여 섭취하셨습니다.\n"
         intakeSolution += "- ⬇️식사량 줄이기\n"
         totalSolution += "평소에도 기록하신 것과 동일하게 식사하신다면 전체적인 식사량을 줄이시기 바랍니다.\n"
 
@@ -1300,24 +1257,25 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
     valProtein = resultProtein[1]
 
     if resultProtein[0] == "부족":
-        nutriSolution += "-단백질(부족⬇️) : 단백질은 권장섭취량(" + str(valProtein) + "g) 미만으로 부족하게 섭취하셨습니다.\n"
+        nutriSolution += "- 단백질 | " + str(round(protein)) + "g | 부족⬇️ : 단백질은 권장섭취량(" + str(valProtein) + "g) 미만으로 부족하게 섭취하셨습니다.\n"
         intakeSolution += "- ⬆️단백질 섭취량 늘리기\n"
         totalSolution += "단백질이 풍부한 음식을 섭취하시기 바랍니다.\n"
         foodSolution += "\n* 단백질 급원식품: 돼지고기, 달걀, 닭고기, 소고기, 두부, 우유, 대두 등"
     elif resultEnergy[0] == "비교적 적절":
-        nutriSolution += "-단백질(비교적 적절✅) : 단백질은 권장섭취량(" + str(valProtein) + "g)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 단백질 | " + str(round(protein)) + "g | 비교적 적절✅ : 단백질은 권장섭취량(" + str(valProtein) + "g)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
     elif resultEnergy[0] == "적절":
-        nutriSolution += "-단백질(적절✅) : 단백질은 권장섭취량(" + str(valProtein) + "g)을 충족하여 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 단백질 | " + str(round(protein)) + "g | 적절✅ : 단백질은 권장섭취량(" + str(valProtein) + "g)을 충족하여 적절하게 섭취하셨습니다.\n"
 
     resultSFA = calculateSFA(SFA, energy)
     valSFA = resultSFA[1]
+    SFARatio = round(resultSFA[2],1)
 
     if resultSFA[0] == "적절":
-        nutriSolution += "-포화지방(적절✅) : 포화지방은 에너지적정비율(" + str(valSFA) + "%) 미만으로 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 포화지방 | " + str(SFARatio) + "% | 적절✅ : 포화지방은 에너지적정비율(" + str(valSFA) + "%) 미만으로 적절하게 섭취하셨습니다.\n"
     elif resultSFA[0] == "비교적 적절":
-        nutriSolution += "-포화지방(비교적 적절✅) : 포화지방은 에너지적정비율(" + str(valSFA) + "%)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 포화지방 | " + str(SFARatio) + "% | 비교적 적절✅) : 포화지방은 에너지적정비율(" + str(valSFA) + "%)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
     elif resultSFA[0] == "초과":
-        nutriSolution += "-포화지방(과다⬆️) : 포화지방은 에너지적정비율(" + str(valSFA) + "%)을 초과하여 섭취하셨습니다.\n"
+        nutriSolution += "- 포화지방 | " + str(SFARatio) + "% | 과다⬆️ : 포화지방은 에너지적정비율(" + str(valSFA) + "%)을 초과하여 섭취하셨습니다.\n"
         intakeSolution += "- ⬇️포화지방 섭취량 줄이기\n"
         totalSolution += first[1] + ", " + second[1] + " 등 포화지방이 많은 음식을 적게 드시기 바랍니다.\n"
 
@@ -1325,11 +1283,11 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
     valSodium = resultSodium[1]
 
     if resultSodium[0] == "적절":
-        nutriSolution += "-나트륨(적절✅) : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg) 미만으로 적절하게 섭취하셨습니다. \n"
+        nutriSolution += "- 나트륨 | " + str(round(sodium)) + "mg | 적절✅ : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg) 미만으로 적절하게 섭취하셨습니다. \n"
     elif resultSodium[0] == "비교적 적절":
-        nutriSolution += "-나트륨(비교적 적절✅) : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 나트륨 | " + str(round(sodium)) + "mg | 비교적 적절✅ : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
     elif resultSodium[0] == "초과":
-        nutriSolution += "-나트륨(과다⬆️) : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg)을 초과하여 섭취하셨습니다.\n"
+        nutriSolution += "- 나트륨 | " + str(round(sodium)) + "mg | 과다⬆️ : 나트륨은 만성질환위험감소섭취량(" + str(valSodium) + "mg)을 초과하여 섭취하셨습니다.\n"
         if resultEnergy[0] != "부족":
             intakeSolution += "- ⬇️나트륨 섭취량 줄이기\n"
             totalSolution += "나트륨 섭취량을 줄이기 위하여 저나트륨 음식섭취를 추천드립니다. \n"
@@ -1337,35 +1295,37 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
     resultCalcium = calculateCalcium(user_id, calcium)
     valCalcium = resultCalcium[1]
     upperCalcium = resultCalcium[2]
+    calciumPercent = resultCalcium[3]
 
     if resultCalcium[0] == "부족":
-        nutriSolution += "-칼슘(부족⬇️) : 칼슘은 권장섭취량(" + str(valCalcium) + "mg) 미만으로 부족하게 섭취하셨습니다. \n"
+        nutriSolution += "- 칼슘 | " + str(round(calcium)) + "mg | 부족⬇️ : 칼슘은 권장섭취량(" + str(valCalcium) + "mg)의 " + str(calciumPercent) + "% 수준으로 부족하게 섭취하셨습니다. \n"
         intakeSolution += "- ⬆️칼슘 섭취량 늘리기\n"
         totalSolution += "칼슘이 충분한 음식을 섭취하시기 바랍니다.\n"
         foodSolution += "\n* 칼슘 급원식품: 저지방 유제품, 멸치, 두부, 두유, 시래기 등"
     elif resultCalcium[0] == "비교적 적절":
-        nutriSolution += "-칼슘(비교적 적절✅) : 칼슘은 권장섭취량(" + str(valCalcium) + "mg)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 칼슘 | " + str(round(calcium)) + "mg | 비교적 적절✅ : 칼슘은 권장섭취량(" + str(valCalcium) + "mg)의 " + str(calciumPercent) + "% 수준으로 비교적 적절하게 섭취하셨습니다.\n"
     elif resultCalcium[0] == "권장 충족":
-        nutriSolution += "-칼슘(적절✅) : 칼슘은 권장섭취량(" + str(valCalcium) + "mg)을 충족하셨고 상한섭취량(" + str(upperCalcium) +"mg) 미만으로 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 칼슘 | " + str(round(calcium)) + "mg | 적절✅ : 칼슘은 권장섭취량(" + str(valCalcium) + "mg)의 " + str(calciumPercent) + "% 수준으로 충족하셨고 상한섭취량(" + str(upperCalcium) +"mg) 미만으로 적절하게 섭취하셨습니다.\n"
     elif resultCalcium[0] == "초과":
-        nutriSolution += "-칼슘(과다⬆️) : 칼슘은 상한섭취량(" + str(upperCalcium) + "mg)을 초과하여 섭취하셨습니다.\n"
+        nutriSolution += "- 칼슘 | " + str(round(calcium)) + "mg | 과다⬆️ : 칼슘은 상한섭취량(" + str(upperCalcium) + "mg)의 " + str(calciumPercent) + "% 수준으로 초과하여 섭취하셨습니다.\n"
         intakeSolution += "- ⬇️칼슘 섭취량 줄이기\n"
 
     resultVitaminC = calculateVitaminC(vitaminC)
     valVitaminC = resultVitaminC[1]
     upperVitaminC = resultVitaminC[2]
+    vcPercent = resultVitaminC[3]
 
     if resultVitaminC[0] == "부족":
-        nutriSolution += "-비타민C(부족⬇️) : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg) 미만으로 부족하게 섭취하셨습니다. \n"
+        nutriSolution += "- 비타민C | " + str(round(vitaminC)) + "mg | 부족⬇️ : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg)의 " + str(vcPercent) + "% 수준으로 부족하게 섭취하셨습니다. \n"
         intakeSolution += "- ⬆️비타민 섭취량 늘리기\n"
         totalSolution += "비타민C가 충분한 음식을 섭취하시기 바랍니다.\n"
         foodSolution += "\n* 비타민C 급원식품: 귤, 딸기, 시금치, 무, 오렌지 등"   
     elif resultVitaminC[0] == "비교적 적절":
-        nutriSolution += "-비타민C(비교적 적절✅) : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg)을 고려할 때 비교적 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 비타민C | " + str(round(vitaminC)) + "mg | 비교적 적절✅ : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg)의 " + str(vcPercent) + "% 수준으로 비교적 적절하게 섭취하셨습니다.\n"
     elif resultVitaminC[0] == "권장 충족":
-        nutriSolution += "-비타민C(적절✅) : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg)을 충족하셨고 상한섭취량(" + str(upperVitaminC) +"mg) 미만으로 적절하게 섭취하셨습니다.\n"
+        nutriSolution += "- 비타민C | " + str(round(vitaminC)) + "mg | 적절✅ : 비타민C는 권장섭취량(" + str(valVitaminC) + "mg)의 " + str(vcPercent) + "% 수준으로 충족하셨고 상한섭취량(" + str(upperVitaminC) +"mg) 미만으로 적절하게 섭취하셨습니다.\n"
     elif resultVitaminC[0] == "초과":
-        nutriSolution += "-비타민C(과다⬆️) : 비타민C는 상한섭취량(" + str(upperVitaminC) + "mg)을 초과하여 섭취하셨습니다.\n"
+        nutriSolution += "- 비타민C | " + str(round(vitaminC)) + "mg | 과다⬆️ : 비타민C는 상한섭취량(" + str(upperVitaminC) + "mg)의 " + str(vcPercent) + "% 수준으로 초과하여 섭취하셨습니다.\n"
         intakeSolution += "- ⬇️비타민 섭취량 줄이기\n"
 
     print(nutriSolution)
@@ -1399,9 +1359,9 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
 def calculateRatio(carbo, protein, fat): # 탄단지 비율별 솔루션 계산
 
     # 탄단지 비율 구하기
-    carboRatio = round((carbo * 4 / (carbo*4 + protein * 4 + fat * 9))*100,0)
-    proteinRatio = round((protein *4 / (carbo*4 + protein * 4 + fat * 9))*100,0)
-    fatRatio = round((fat*9 / (carbo*4 + protein * 4 + fat * 9))*100,0)
+    carboRatio = round((carbo * 4 / (carbo*4 + protein * 4 + fat * 9))*100)
+    proteinRatio = round((protein *4 / (carbo*4 + protein * 4 + fat * 9))*100)
+    fatRatio = round((fat*9 / (carbo*4 + protein * 4 + fat * 9))*100)
 
     print(carboRatio, proteinRatio, fatRatio)
 
@@ -1446,7 +1406,7 @@ def calculateEnergy(user_id, energy): # 영양소별 솔루션 계산 - 열량
         elif user_dict[user_id].PAL >= 9.8 : PA = 1.11
         elif user_dict[user_id].PAL >= 7 : PA = 1
 
-        EER = round( (662 - (9.53*user_dict[user_id].age) + (PA* ((15.91*user_dict[user_id].weight) + (539.6*user_dict[user_id].height/100)))) ,0)
+        EER = round( (662 - (9.53*user_dict[user_id].age) + (PA* ((15.91*user_dict[user_id].weight) + (539.6*user_dict[user_id].height/100)))))
 
     elif user_dict[user_id].gender == "여자":
         if user_dict[user_id].PAL >= 13.3 : PA = 1.45
@@ -1454,14 +1414,16 @@ def calculateEnergy(user_id, energy): # 영양소별 솔루션 계산 - 열량
         elif user_dict[user_id].PAL >= 9.8 : PA = 1.12
         elif user_dict[user_id].PAL >= 7 : PA = 1
 
-        EER = round( (354 - (6.91*user_dict[user_id].age) + (PA* ((9.36*user_dict[user_id].weight) + (726*user_dict[user_id].height/100)))) ,0)
+        EER = round( (354 - (6.91*user_dict[user_id].age) + (PA* ((9.36*user_dict[user_id].weight) + (726*user_dict[user_id].height/100)))))
 
-    if energy < EER * 0.9:
-        return ["부족", EER]
-    elif EER * 0.9 <= energy and EER * 1.1 >= energy:
-        return ["적절", EER]
+    energyPercent = energy/EER *100
+
+    if energyPercent < 0.9:
+        return ["부족", EER, round(energyPercent)]
+    elif 0.9 <= energyPercent and 1.1 >= energyPercent:
+        return ["적절", EER, round(energyPercent)]
     else:
-        return ["초과", EER]
+        return ["초과", EER, round(energyPercent)]
 
 
 def calculateProtein(user_id, protein): # 영양소별 솔루션 계산 - 단백질
@@ -1505,11 +1467,11 @@ def calculateSFA(SFA,energy): # 영양소별 솔루션 계산 - 포화지방
     print(SFARatio)
 
     if SFARatio < 7:
-        return ["적절",7]
+        return ["적절",7,SFARatio]
     elif SFARatio >= 7 and SFARatio <= 7.7:
-        return ["비교적 적절",7]
+        return ["비교적 적절",7,SFARatio]
     else:
-        return ["초과",7]
+        return ["초과",7,SFARatio]
 
 def calculateSodium(user_id, sodium): # 영양소별 솔루션 계산 - 나트륨
     if user_dict[user_id].age >= 19 and user_dict[user_id].age <= 64:
@@ -1540,63 +1502,88 @@ def calculateCalcium(user_id, calcium): # 영양소별 솔루션 계산 - 칼슘
 
     if user_dict[user_id].gender == "남자":
         if user_dict[user_id].age >= 19 and user_dict[user_id].age <= 49:
+
+            calciumPercent = round((calcium/800*100))
+            calciumUpperPercent = round((calcium/2500*100))
+
             if calcium < 720:
-                return ["부족",800,2500]
+                return ["부족",800,2500,calciumPercent]
             elif 720 <= calcium and calcium < 800:
-                return ["비교적 적절",800,2500]
+                return ["비교적 적절",800,2500,calciumPercent]
             elif 800 <= calcium and calcium < 2500:
-                return ["권장 충족",800,2500]
+                return ["권장 충족",800,2500,calciumPercent]
             else:
-                return ["초과",800,2500]
+                return ["초과",800,2500,calciumUpperPercent]
+
         elif user_dict[user_id].age >= 50 and user_dict[user_id].age <= 64:
+
+            calciumPercent = round((calcium/750*100))
+            calciumUpperPercent = round((calcium/2000*100))
+
             if calcium < 675:
-                return ["부족",750,2000]
+                return ["부족",750,2000,calciumPercent]
             elif 675 <= calcium and calcium < 750:
-                return ["비교적 적절",750,2000]
+                return ["비교적 적절",750,2000,calciumPercent]
             elif 750 <= calcium and calcium < 2000:
-                return ["권장 충족",750,2000]
+                return ["권장 충족",750,2000,calciumPercent]
             else:
-                return ["초과",750,2000]
+                return ["초과",750,2000,calciumUpperPercent]
+
         else:
+
+            calciumPercent = round((calcium/700*100))
+            calciumUpperPercent = round((calcium/2000*100))
+
             if calcium < 630:
-                return ["부족",700,2000]
+                return ["부족",700,2000,calciumPercent]
             elif 630 <= calcium and calcium < 700:
-                return ["비교적 적절",700,2000]
+                return ["비교적 적절",700,2000,calciumPercent]
             elif 700 <= calcium and calcium < 2000:
-                return ["권장 충족",700,2000]
+                return ["권장 충족",700,2000,calciumPercent]
             else:
-                return ["초과",700,2000]
+                return ["초과",700,2000,calciumUpperPercent]
 
     elif user_dict[user_id].gender == "여자":
         if user_dict[user_id].age >= 19 and user_dict[user_id].age <= 49:
+
+            calciumPercent = round((calcium/700*100))
+            calciumUpperPercent = round((calcium/2500*100))
+
             if calcium < 630:
-                return ["부족",700,2500]
+                return ["부족",700,2500,calciumPercent]
             elif 630 <= calcium and calcium < 700:
-                return ["비교적 적절",700,2500]
+                return ["비교적 적절",700,2500,calciumPercent]
             elif 700 <= calcium and calcium < 2500:
-                return ["권장 충족",700,2500]
+                return ["권장 충족",700,2500,calciumPercent]
             else:
-                return ["초과",700,2500]
+                return ["초과",700,2500,calciumUpperPercent]
         else:
+
+            calciumPercent = round((calcium/800*100))
+            calciumUpperPercent = round((calcium/2000*100))
+
             if calcium < 720:
-                return ["부족",800,2000]
+                return ["부족",800,2000,calciumPercent]
             elif 720 <= calcium and calcium < 800:
-                return ["비교적 적절",800,2000]
+                return ["비교적 적절",800,2000,calciumPercent]
             elif 800 <= calcium and calcium < 2000:
-                return ["권장 충족",800,2000]
+                return ["권장 충족",800,2000,calciumPercent]
             else:
-                return ["초과",800,2000]
+                return ["초과",800,2000,calciumUpperPercent]
 
 def calculateVitaminC(vc): # 영양소별 솔루션 계산 - 비타민C
 
+    vcPercent = round((vc/100*100))
+    vcUpperPercent = round((vc/2000*200))
+
     if vc < 90:
-        return ["부족",100,2000]
+        return ["부족",100,2000,vcPercent]
     elif 90 <= vc and vc < 100:
-        return ["비교적 적절",100,2000]
+        return ["비교적 적절",100,2000,vcPercent]
     elif 100 <= vc and vc < 2000:
-        return ["권장 충족",100,2000]
+        return ["권장 충족",100,2000,vcPercent]
     else:
-        return ["초과",100,2000]
+        return ["초과",100,2000,vcUpperPercent]
 
 
 #------------------------------------------------------------------------1일 솔루션(의대)------------------------------------------------------------------------#
