@@ -1,4 +1,4 @@
-FOOD_SURVEY_QUICKREPLIES = [
+GENERAL_FOOD_SURVEY_QUICKREPLIES = [
     {
                     "messageText" : "거의 안 먹음",
                     "action": "message",
@@ -35,6 +35,210 @@ FOOD_SURVEY_QUICKREPLIES = [
                     "label" : "1일 2번"
                 },{
                     "messageText" : "1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                }
+            ]
+
+MILK_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "우유 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "우유 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번",
+                },{
+                    "messageText" : "우유 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "우유 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "우유 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "우유 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "우유 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "우유 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "우유 1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                }
+            ]
+
+FRUIT_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "과일 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "과일 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번"
+                },{
+                    "messageText" : "과일 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "과일 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "과일 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "과일 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "과일 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "과일 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "과일 1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                }
+            ]
+
+DRINK_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "술 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "술 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번",
+                },{
+                    "messageText" : "술 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "술 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "술 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "술 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "술 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "술 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "술 1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                }
+            ]
+
+COFFEE_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "커피 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "커피 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번",
+                },{
+                    "messageText" : "커피 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "커피 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "커피 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "커피 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "커피 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "커피 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "커피 1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                },{
+                    "messageText" : "커피 초과",
+                    "action": "message",
+                    "label" : "1일 3번 초과"
+                }
+            ]
+
+RICE_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "밥 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "밥 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번",
+                },{
+                    "messageText" : "밥 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "밥 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "밥 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "밥 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "밥 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "밥 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "밥 1일 3번",
                     "action": "message",
                     "label" : "1일 3번"
                 }
