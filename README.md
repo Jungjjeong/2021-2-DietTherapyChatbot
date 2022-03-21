@@ -1,19 +1,25 @@
-# 2021-2-DietTherapyChatbot
-동국대학교 정보통신공학과 소프트웨어구조 연구실 정지영
+![Untitled](https://user-images.githubusercontent.com/72294509/154957558-e50b7e89-1198-45c5-aa5f-d0e0d255b74d.png)
 
+# ✏ Chatbot Description
 
-<p align="middle" >
-  <img width="200px;" src="https://user-images.githubusercontent.com/72294509/143821076-9c483bb9-9c59-4ada-b08d-a1b8d1401ea9.png"/>
-</p>
-<h1 align="middle">용종환자 식이치료 Chatbot</h1>
+본 챗봇은 용종 환자의 생활 식습관 치료 및 솔루션 제공을 위합니다.
 
-## ✏ Description
+- 용종 환자의 첫 병원 내원 시, 생활 식습관 및 기본 정보 조사 진행
+- 1년 생활 식습관 기준 솔루션 제공 기능
+- 용종 환자의 매 식단 추적 및 솔루션 제공 기능
+- 환자별 생활 식습관 저장 및 엑셀 출력 기능
+<br>
 
-- 본 챗봇은 용종 환자의 생활 식습관 치료 및 솔루션 제공을 위합니다.
-- 용종 환자가 병원에 처음 내원할 때 진행하는 생활 식습관 솔루션 및 기본 정보 입력 기능
-- 용종 환자의 매 식단 추적 및 솔루션 도출 기능 
+# 💻 시스템 구성도
 
-## 💡 Team
-- 동국대학교 임대운 교수님, 김웅섭 교수님, 소프트웨어 구조 연구실 학부연구생 정지영 
+![Frame 1 (5).png](https://user-images.githubusercontent.com/72294509/154957567-acfb8f5b-e9da-4348-97fe-0d3c33b38e2f.png)
+<br>
+
+# 👨‍👨‍👧‍👧 Team
+
+- 동국대학교 소프트웨어 구조 연구실
+    - [정지영](https://github.com/Jungjjeong)
+    - [임효빈](https://github.com/Lim-Hyobin)
+    - [우신영](https://github.com/Woosinyeong)
 - 동국대학교 경주캠퍼스 의과대학
-- 서울대학교 식품영양학과 
+- 서울대학교 식품영양학과
