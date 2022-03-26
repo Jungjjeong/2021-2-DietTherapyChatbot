@@ -9,7 +9,7 @@ cluster = MongoClient("mongodb+srv://user:0000@cluster0.uio0y.mongodb.net/myFirs
 db = cluster["DietTherapy"]
 음식영양성분 = db["음식영양성분"]
 음식섭취양 = db["음식섭취양"]
-식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양"]
+식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양3"]
 
 df = None
 now = str(datetime.now())
@@ -37,7 +37,7 @@ for exercise in range(5):
 # print(excel_column)    
 
 df = pd.DataFrame(columns=excel_column)
-df.to_excel('/home/user/jiyoung/DietTheraphyChatbot/data/1년섭취빈도조사_운동량포함.xlsx', sheet_name='food&exercise', index=False)
+df.to_excel('/home/user/jiyoung/DietTheraphyChatbot/data/1년섭취빈도조사_운동량포함_data.xlsx', sheet_name='food&exercise', index=False)
 print(df) 
 
 

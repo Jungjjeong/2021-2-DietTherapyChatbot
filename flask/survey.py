@@ -14,6 +14,9 @@ class SurveyForm():
         self.nutriIntake = []
         self.nutriIdx = 0
 
+        self.milkType4Solution = 0
+        self.milkFreqeuncy = 0
+        self.milkEntity = 0
         self.foodFrequency = []
         self.foodEntity = []
         self.idx = 0

@@ -1,14 +1,16 @@
 GENERAL_FOOD_SURVEY_QUICKREPLIES = [
     {
+                    "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
                     "messageText" : "거의 안 먹음",
                     "action": "message",
                     "label" : "거의 안 먹음",
-                    "messageText": "거의 안 먹음"
                 },{
                     "messageText" : "1개월 1번",
                     "action": "message",
                     "label" : "1개월 1번",
-                    "messageText": "1개월 1번"
                 },{
                     "messageText" : "1개월 2-3번",
                     "action": "message",
@@ -42,6 +44,10 @@ GENERAL_FOOD_SURVEY_QUICKREPLIES = [
 
 MILK_FOOD_SURVEY_QUICKREPLIES = [
     {
+                   "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
                     "messageText" : "우유 거의 안 먹음",
                     "action": "message",
                     "label" : "거의 안 먹음",
@@ -82,6 +88,10 @@ MILK_FOOD_SURVEY_QUICKREPLIES = [
 
 FRUIT_FOOD_SURVEY_QUICKREPLIES = [
     {
+                    "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
                     "messageText" : "과일 거의 안 먹음",
                     "action": "message",
                     "label" : "거의 안 먹음",
@@ -122,6 +132,10 @@ FRUIT_FOOD_SURVEY_QUICKREPLIES = [
 
 DRINK_FOOD_SURVEY_QUICKREPLIES = [
     {
+                    "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
                     "messageText" : "술 거의 안 먹음",
                     "action": "message",
                     "label" : "거의 안 먹음",
@@ -162,6 +176,10 @@ DRINK_FOOD_SURVEY_QUICKREPLIES = [
 
 COFFEE_FOOD_SURVEY_QUICKREPLIES = [
     {
+                    "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
                     "messageText" : "커피 거의 안 먹음",
                     "action": "message",
                     "label" : "거의 안 먹음",
@@ -205,6 +223,50 @@ COFFEE_FOOD_SURVEY_QUICKREPLIES = [
             ]
 
 RICE_FOOD_SURVEY_QUICKREPLIES = [
+    {
+                    "messageText" : "돌아가기",
+                    "action": "message",
+                    "label" : "돌아가기",
+                },{
+                    "messageText" : "밥 거의 안 먹음",
+                    "action": "message",
+                    "label" : "거의 안 먹음",
+                },{
+                    "messageText" : "밥 1개월 1번",
+                    "action": "message",
+                    "label" : "1개월 1번",
+                },{
+                    "messageText" : "밥 1개월 2-3번",
+                    "action": "message",
+                    "label" : "1개월 2-3번"
+                },{
+                    "messageText" : "밥 1주일 1번",
+                    "action": "message",
+                    "label" : "1주일 1번"
+                },{
+                    "messageText" : "밥 1주일 2-4번",
+                    "action": "message",
+                    "label" : "1주일 2-4번"
+                },{
+                    "messageText" : "밥 1주일 5-6번",
+                    "action": "message",
+                    "label" : "1주일 5-6번"
+                },{
+                    "messageText" : "밥 1일 1번",
+                    "action": "message",
+                    "label" : "1일 1번"
+                },{
+                    "messageText" : "밥 1일 2번",
+                    "action": "message",
+                    "label" : "1일 2번"
+                },{
+                    "messageText" : "밥 1일 3번",
+                    "action": "message",
+                    "label" : "1일 3번"
+                }
+            ]
+
+DEFAULT_RICE_FOOD_SURVEY_QUICKREPLIES = [
     {
                     "messageText" : "밥 거의 안 먹음",
                     "action": "message",
