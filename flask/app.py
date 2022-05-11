@@ -8,6 +8,7 @@ from pandas.core.indexes.api import get_objs_combined_axis
 from pymongo import MongoClient
 from fractions import Fraction
 import re
+import pytz
 
 #from torch import bernoulli
 
@@ -23,8 +24,8 @@ cluster = MongoClient("mongodb+srv://user:0000@cluster0.uio0y.mongodb.net/myFirs
 db = cluster["DietTherapy"]
 음식영양성분 = db["음식영양성분"]
 음식섭취양 = db["음식섭취양"]
-식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양3"]
-식이빈도조사_단위영양성분 = db["식이빈도조사_단위영양성분2"]
+식이빈도조사_음식섭취양 = db["식이빈도조사_음식섭취양"]
+식이빈도조사_단위영양성분 = db["식이빈도조사_단위영양성분"]
 user_dict = {} # SurveyUser 객체가 들어감. 
 
 food_name = ""
@@ -734,11 +735,11 @@ def getNutriNum():
                     }
                 ], "quickReplies": [
                     {
-                        "messageText" : "영양제이름",
+                        "messageText" : "영양제이미지",
                         "action": "message",
                         "label" : "맞습니다"
                     },{
-                        "messageText" : "영양제종류입력",
+                        "messageText" : "영양제종류",
                         "action": "message",
                         "label" : "재입력"
                     }
@@ -785,12 +786,12 @@ def getNutri():
                         "description": "입력된 정보를 확인해 주세요.\n맞으면 '맞습니다', 정보가 틀리면 '재입력'을 눌러 다시 진행해주세요.",
                         "itemList": [
                             {
-                                "title": "제품명",
-                                "description": user_dict[user_id].nutriSupplement
-                            },
-                            {
                                 "title": "제조회사",
                                 "description": user_dict[user_id].nutriCompany
+                            },
+                            {
+                                "title": "제품명",
+                                "description": user_dict[user_id].nutriSupplement
                             },
                             {
                                 "title": "복용기간",
@@ -810,7 +811,7 @@ def getNutri():
                             {
                                 "action": "message",
                                 "label": "맞습니다",
-                                "messageText": "영양제사진전송"
+                                "messageText": "영양제확인"
                             },
                             {
                                 "action":  "message",
@@ -881,7 +882,7 @@ def getNutriIndex():
                     }
                 ], "quickReplies": [
                     {
-                        "messageText" : "영양제이름",
+                        "messageText" : "영양제사진전송",
                         "action": "message",
                         "label" : "추가식이보충제입력"
                     }
@@ -902,6 +903,8 @@ from PIL import Image
 def getnutriPhoto():
     print("식이보충제 사진을 받는 함수")
     
+    global nutri_photo_url
+
     req = request.get_json()
     # print(req)
 
@@ -910,24 +913,41 @@ def getnutriPhoto():
     # photo_type = req["action"]["detailParams"]["image"]["value"]
     nutri_photo_type = req["action"]["detailParams"]["nutriImage"]['value']
     nutri_photo_json = json.loads(nutri_photo_type) # JSON 문자열을 Python 객체로 변환
-
-    nutri_photo_url = nutri_photo_json["secureUrls"]
-    nutri_u = nutri_photo_url[5:-1] # List( 자름
-    # print(nutri_u)
-
+    
+    nutri_photo_quantity = int(nutri_photo_json["imageQuantity"])
+    print(nutri_photo_quantity)
 
     class AppURLopener(urllib.request.FancyURLopener):
         version = "Mozilla/5.0"
-        
+            
     urllib._urlopener = AppURLopener()
 
-    img_path = "/home/user/jiyoung/share_data/pictures/" + str(datetime.now()) + user_dict[user_id].user_name
-    # img_path = user_dict[user_id].user_name + str(datetime.now())
+    var_nutri_photo_urllist = nutri_photo_json["secureUrls"]
+    # print(var_nutri_photo_urllist)
+    nutri_photo_urllist = var_nutri_photo_urllist[5:-1] # List( 자름
+    # print(nutri_photo_urllist)
 
-    urllib._urlopener.retrieve(nutri_u, img_path + ".jpg")
-    # urlretrieve_img = Image.open("test.jpg") # 저장된 이미지 확인
+    if nutri_photo_quantity == 1:
+        nutri_photo_url = nutri_photo_urllist
+        # print(nutri_photo_url)
 
-    # upload = {'image': open('/home/user/jiyoung/flask/test.jpg', 'rb')} # 업로드하기위한 파일
+        img_path = "/home/user/jiyoung/share_data/pictures/" + str(datetime.now()) + user_dict[user_id].user_name
+
+        urllib._urlopener.retrieve(nutri_photo_url, img_path + ".jpg")
+
+    elif nutri_photo_quantity == 2:
+        commaIdx = nutri_photo_urllist.find(',')
+
+        for photonum in range(nutri_photo_quantity):
+            if photonum == 0:
+                nutri_photo_url = nutri_photo_urllist[:commaIdx]
+            elif photonum == 1:
+                nutri_photo_url = nutri_photo_urllist[commaIdx+2:]
+                # print(nutri_photo_url)
+
+            img_path = "/home/user/jiyoung/share_data/pictures/" + str(datetime.now()) + user_dict[user_id].user_name + str(photonum+1)
+
+            urllib._urlopener.retrieve(nutri_photo_url, img_path + ".jpg")
 
 
     res = {
@@ -942,7 +962,7 @@ def getnutriPhoto():
                  ],
                   "quickReplies": [
                      {
-                       "messageText": "영양제확인",
+                       "messageText": "영양제이름",
                        "action": "message",
                        "label": "사진전송완료"
                       }
@@ -960,6 +980,7 @@ import constant
 
 milkType4Solution = 0
 fruitTypeWeight = 0
+coffeeFrequency = 0
 
 foodListForSurvey = list(식이빈도조사_음식섭취양.find().sort("순서" , 1)) # DB 순서가 바뀌지 않도록 정렬
 # print(foodListForSurvey)
@@ -970,6 +991,7 @@ def get1Frequency():
     print("일반음식, 우유, 과일, 술 별로 1년 섭취 빈도를 응답하고, 평균 섭취양 받는 함수")
 
     global milkType4Solution
+    global coffeeFrequency
     
     req = request.get_json()
     # print(req)
@@ -1007,7 +1029,8 @@ def get1Frequency():
                 calculateSolutionBefore(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
 
         idx = user_dict[user_id].survey.idx
-        if idx == 2 or (idx >= 4 and idx <= 82) or (idx >= 87 and idx <= 88) or (idx >= 103 and idx <= 114): # 일반 음식 (쌀밥, 잡곡밥, 김밥, 우유, 과일, 커피, 술이 아닐때)
+
+        if idx == 2 or (idx >= 4 and idx <= 82) or (idx >= 87 and idx <= 88) or (idx >= 107 and idx <= 115): # 일반 음식 (쌀밥, 잡곡밥, 김밥, 우유, 과일, 커피, 술이 아닐때)
 
             beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
@@ -1136,8 +1159,8 @@ def get1Frequency():
                 calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
 
             return getFrequencyofGeneral(idx)
-
-        elif idx >= 89 and idx <= 101: # 과일 경우
+        
+        elif idx == 89: #과일 전체의 섭취량 묻는 문항
 
             beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
@@ -1153,6 +1176,39 @@ def get1Frequency():
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
                 portion = dbResult[11]
+
+            weightval = dbResult[19]
+            #print(weightval)
+            
+            frequencyPerDay = user_dict[user_id].survey.foodFrequency[idx-1]
+
+            if reqEntity != '돌아가기':
+                print("음식종류, 섭취빈도, 섭취양 : ",beforeFood['음식종류'], frequencyPerDay, portion)
+                calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
+
+            return getAllFruitFrequency(idx)
+
+        elif idx >= 90 and idx <= 102: # 과일 경우
+
+            beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
+
+            reqEntity = req["action"]["detailParams"]["섭취양선택지"]["value"]
+            dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
+
+            if idx == 90: #과일 전체 섭취양 계산 분리
+                user_dict[user_id].survey.foodEntity.append("0")
+                portion = "0"
+            else:
+                if reqEntity == '빈도선택1':
+                    user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                    portion = dbResult[3]
+                elif reqEntity == '빈도선택2' :
+                    user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                    portion = dbResult[7]
+                elif reqEntity == '빈도선택3':
+                    user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                    portion = dbResult[11]
+
             weightval = dbResult[19]
             #print(weightval)
             
@@ -1164,7 +1220,7 @@ def get1Frequency():
 
             return getFruitType(idx)
 
-        elif idx == 102: # 커피일 때
+        elif idx == 103: # 커피인 경우
             beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
             reqEntity = req["action"]["detailParams"]["섭취양선택지"]["value"]
@@ -1191,8 +1247,38 @@ def get1Frequency():
 
             return getFrequencyofCoffee(idx)
 
+        elif idx == 104 or idx == 105 or idx == 106: # 커피, 커피_프림, 커피_설탕 솔루션을 위해 따로 계산
 
-        elif idx >= 115: # 주류인 경우
+            beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
+
+            reqEntity = req["action"]["detailParams"]["섭취양선택지"]["value"]
+            dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
+
+            if reqEntity == '빈도선택1':
+                user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                portion = dbResult[3]
+            elif reqEntity == '빈도선택2' :
+                user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                portion = dbResult[7]
+            elif reqEntity == '빈도선택3':
+                user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                portion = dbResult[11]
+
+            weightval = dbResult[19]
+            #print(weightval)
+            
+            frequencyPerDay = user_dict[user_id].survey.foodFrequency[idx-1]
+
+            if coffeeFrequency >= 4:
+                frequencyPerDay = coffeeFrequency
+
+            if reqEntity != '돌아가기':
+                print("음식종류, 섭취빈도, 섭취양 : ",beforeFood['음식종류'], frequencyPerDay, portion)
+                calculateSolution(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
+
+            return getFrequencyofGeneral(idx)
+
+        elif idx >= 116: # 주류인 경우
 
             beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
@@ -1268,7 +1354,7 @@ def getFrequencyofGeneral(idx):
     # print(idx)
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요.\n\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.GENERAL_FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -1316,7 +1402,7 @@ def getGeneralEntity():
     
     if frequency == '거의 안 먹음':
         frequencyPerDay = 0
-        simpleText = "선택하신 섭취 빈도는 {frequency} 입니다.\n다음 음식 조사를 위해 확인을 눌러주세요.".format(frequency = frequency)
+        simpleText = "선택하신 섭취 빈도는 {frequency} 입니다.\n\n다음 음식 조사를 위해 확인을 눌러주세요.".format(frequency = frequency)
         quickReplies = [{
                 "messageText" : "빈도선택1",
                 "action": "message",
@@ -1363,7 +1449,7 @@ def getFrequencyofRice(idx):
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     
     if idx == 0:
         quickReplies = constant.DEFAULT_RICE_FOOD_SURVEY_QUICKREPLIES
@@ -1512,7 +1598,7 @@ def getFrequencyofMilk():
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.MILK_FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -1630,7 +1716,92 @@ def getMilkBefore(user_id):
     calculateSolutionBefore(user_id, frequencyPerDay = frequencyPerDay, portion= portion, foodName= beforeFood['음식종류'], weightval = weightval)
 
 
-#@app.route("/getFruitType", methods = ["GET", "POST"])
+def getAllFruitFrequency(idx):
+
+    req = request.get_json()
+    user_id = req["userRequest"]["user"]["id"]
+    nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
+    quickReplies = constant.ALLFRUIT_FOOD_SURVEY_QUICKREPLIES
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                             "text" :"("+ str(idx+1) + "/120)과일 종류에 상관없이 과일을 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요."
+                    }
+                }
+            ], "quickReplies": quickReplies
+        }
+    }
+
+    return res
+
+@app.route("/getAllFruitEntity", methods = ["GET", "POST"])
+def getAllFruitEntity():
+
+    req = request.get_json()
+    user_id = req["userRequest"]["user"]["id"]
+    frequency =  req["action"]["detailParams"]["과일전체빈도조사선택지"]["value"] #과일전체섭취빈도
+    frequency = frequency.replace("과일전체 ","")
+
+    nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
+    beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
+
+    dbResult2 = str(식이빈도조사_음식섭취양.find_one({"음식종류" : nowFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
+
+    norm = dbResult2[23]
+    #print("dbResult :", dbResult)
+
+    simpleText = "선택하신 섭취 빈도는 {frequency} 입니다. \n다음 음식 조사를 위해 확인을 눌러주세요.".format(frequency = frequency)
+
+    quickReplies = quickReplies = [{
+                "messageText" : "빈도선택1",
+                "action": "message",
+                "label" : "확인"
+            }]
+    frequencyPerDay = 0 # 하루 섭취량으로 변경
+
+    if frequency == '거의 안 먹음':
+        frequencyPerDay = 0
+    elif frequency == '1개월 1번':
+        frequencyPerDay = 0.033
+    elif frequency == '1개월 2-3번':
+        frequencyPerDay = 0.083
+    elif frequency == '1주일 1번':
+        frequencyPerDay = 0.143
+    elif frequency == '1주일 2-4번':
+        frequencyPerDay = 0.429
+    elif frequency == '1주일 5-6번':
+        frequencyPerDay = 0.786
+    elif frequency == '1일 1번':
+        frequencyPerDay = 1
+    elif frequency == '1일 2번':
+        frequencyPerDay = 2
+    elif frequency == '1일 3번':
+        frequencyPerDay = 3
+
+
+    user_dict[user_id].survey.idx += 1
+
+    user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+
+    res = {
+        "version" : "2.0",
+        "template":{
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text" : simpleText
+                    }
+                }
+            ], "quickReplies": quickReplies
+        }
+    }
+
+    return res
+
 def getFruitType(idx):
 
     req = request.get_json()
@@ -1645,7 +1816,7 @@ def getFruitType(idx):
             "outputs": [
                 {
                     "simpleText": {
-                             "text" :"'{foodName}'을(를) 주로 제철에 드시는지, 계절과 무관하게 드시는지 선택해주세요.".format(foodName=nowFood["음식종류"])
+                             "text" :"'{foodName}'을(를) 계절과 무관하게(일 년 내내) 드시는지, 주로 제철(일 년 중 몇 달 동안에만)에 드시는지 선택해주세요.".format(foodName=nowFood["음식종류"])
                     }
                 }
             ], "quickReplies": [
@@ -1681,12 +1852,14 @@ def getFrequencyofFruit():
 
     if fruitType == "제철":
         fruitTypeWeight = calculateFruitTypeWeight("제철", nowFood["음식종류"])
+        simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 제철에 드실 때 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     elif fruitType == "무관":
         fruitTypeWeight = calculateFruitTypeWeight("무관", nowFood["음식종류"])
+        simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     
     print("과일 제철 시 가중치 값 : ", fruitTypeWeight)
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    # simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요,\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.FRUIT_FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -1717,7 +1890,6 @@ def getFruitEntity():
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
     beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
-    dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
     dbResult2 = str(식이빈도조사_음식섭취양.find_one({"음식종류" : nowFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
 
     norm = dbResult2[23]
@@ -1783,7 +1955,7 @@ def getFrequencyofCoffee(idx):
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.\n*단, 커피를 1일 3회보다 자주 드셨다면, \"1일 3회 초과\"를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.\n*단, 커피를 1일 3회보다 자주 드셨다면, \"1일 3회 초과\"를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.COFFEE_FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -1815,29 +1987,8 @@ def getCoffeeOver():
 
     simpleText = foodname + "의 1일 섭취빈도를 선택해주세요."
 
-    quickReplies = [
-        {
-            "messageText" : "커피 1일 4번",
-            "action": "message",
-            "label" : "1일 4번"
-        },{
-            "messageText" : "커피 1일 5번",
-            "action": "message",
-            "label" : "1일 5번"
-        },{
-            "messageText" : "커피 1일 6번",
-            "action": "message",
-            "label" : "1일 6번"
-        },{
-            "messageText" : "커피 1일 7번",
-            "action": "message",
-            "label" : "1일 7번"
-        },{
-            "messageText" : "커피 1일 8번",
-            "action": "message",
-            "label" : "1일 8번"
-        }
-    ]
+    quickReplies = makeQuickRepliesForOverCoffeeEntity()
+
     res = {
         "version" : "2.0",
         "template":{
@@ -1856,6 +2007,8 @@ def getCoffeeOver():
 @app.route("/getCoffeeEntity", methods = ["GET", "POST"])
 def getCoffeeEntity():
 
+    global coffeeFrequency
+
     req = request.get_json()
     user_id = req["userRequest"]["user"]["id"]
 
@@ -1866,7 +2019,6 @@ def getCoffeeEntity():
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
     beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
 
-    dbResult = str(식이빈도조사_음식섭취양.find_one({"음식종류" : beforeFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
     dbResult2 = str(식이빈도조사_음식섭취양.find_one({"음식종류" : nowFood ["음식종류"]},{"_id" : False, "음식종류" : False})).split("'")
 
     norm = dbResult2[23]
@@ -1901,21 +2053,14 @@ def getCoffeeEntity():
         frequencyPerDay = 2
     elif frequency == '1일 3번':
         frequencyPerDay = 3
-    elif frequency == '1일 4번':
-        frequencyPerDay = 4
-    elif frequency == '1일 5번':
-        frequencyPerDay = 5
-    elif frequency == '1일 6번':
-        frequencyPerDay = 6
-    elif frequency == '1일 7번':
-        frequencyPerDay = 7
-    elif frequency == '1일 8번':
-        frequencyPerDay = 8
+    else:
+        frequencyPerDay = calculateCoffeeFrequency(frequency)
 
 
     user_dict[user_id].survey.idx += 1
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    coffeeFrequency = frequencyPerDay
 
     res = {
         "version" : "2.0",
@@ -1939,7 +2084,7 @@ def getFrequencyofDrink(idx):
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
-    simpleText = "("+ str(idx+1) + "/119)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
+    simpleText = "("+ str(idx+1) + "/120)'{foodName}'을(를) 최근 1년간 얼마나 자주 섭취했는지 선택해 주세요.\n선택지에 없을 경우, 최대한 비슷한 횟수를 선택해주세요.".format(foodName=nowFood["음식종류"])
     quickReplies = constant.DRINK_FOOD_SURVEY_QUICKREPLIES
 
     res = {
@@ -2038,15 +2183,17 @@ def getDrinkOver():
 
     foodname = beforeFood["음식종류"]
 
-    simpleText = foodname + "의 1회 평균 섭취량을 선택해주세요."
-    if beforeFood["음식종류"] == "맥주":
-        simpleText += "\n(맥주 1컵 = 200ml, 맥주 1병 = 500ml, 맥주 1병 = 2.5컵)"
+    simpleText = foodname + "의 1회 평균 섭취량을 입력해주세요."
+    if beforeFood["음식종류"] == "소주":
+        simpleText += "\n1.5병부터 0.5병 단위로 입력할 수 있습니다.\nex) 1.5병, 4병, 5.5병\n\n단위 '병'을 꼭 입력해주세요!"
+    elif beforeFood["음식종류"] == "맥주":
+        simpleText += "\n1병부터 0.5병 단위로 입력할 수 있습니다.\nex) 1.5병, 4병, 5.5병\n\n(맥주 1컵 = 200ml\n맥주 1병 = 500ml\n맥주 1병 = 2.5컵)\n\n단위 '병'을 꼭 입력해주세요!"
     elif beforeFood["음식종류"] == "막걸리":
-        simpleText += "\n(막걸리 1사발 = 210ml, 막걸리 1병 = 750ml, 막걸리 1병 -> 약 4사발, 막걸리 2병 -> 약 7사발, 막걸리 3병 -> 약 11사발)"
+        simpleText += "\n3사발부터 사발 단위로 입력할 수 있습니다.\nex) 3사발, 5사발, 8사발\n\n(막걸리 1사발 = 210ml, 막걸리 1병 = 750ml)\n\n막걸리 1병 -> 약 4사발\n막걸리 2병 -> 약 7사발\n막걸리 3병 -> 약 11사발\n\n단위 '사발'을 꼭 입력해주세요!"
     elif beforeFood["음식종류"] == "포도주":
-        simpleText += "\n(포도주 1병 = 750ml, 포도주 1병 = 6잔)"
+        simpleText += "\n3잔부터 잔 단위로 입력할 수 있습니다.\nex) 3잔, 5잔, 8잔\n(포도주 1병 = 750ml, 포도주 1병 = 6잔)\n\n단위 '잔'을 꼭 입력해주세요!"
 
-    quickReplies = makeQuickRepliesForOverDrinkEntity(beforeFood)
+    #quickReplies = makeQuickRepliesForOverDrinkEntity(beforeFood)
 
     res = {
         "version" : "2.0",
@@ -2057,7 +2204,7 @@ def getDrinkOver():
                         "text" : simpleText
                     }
                 }
-            ], "quickReplies": quickReplies
+            ]#, "quickReplies": quickReplies
         }
     }
 
@@ -2134,16 +2281,16 @@ def add_survey_result_to_excel2(user: SurveyUser, user_id):
         excel_row.append(time)
         excel_row.append(number)
 
-    while len(excel_row) < 260:
+    while len(excel_row) < 262:
         excel_row.append("응답 없음")
 
     df = None
-    df = pd.read_excel("./data/1년섭취빈도조사_운동량포함_data.xlsx", engine='openpyxl')
+    df = pd.read_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_챗봇데이터저장2.xlsx", engine='openpyxl')
     # print(df.columns)
 
 
     df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
-    df.to_excel("./data/1년섭취빈도조사_운동량포함_data.xlsx", index=False)
+    df.to_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_챗봇데이터저장2.xlsx", index=False)
 
 
 def add_nutri_result_to_excel(user: SurveyUser, user_id):
@@ -2376,6 +2523,121 @@ def makeQuickRepliesForOverDrinkEntity(food): # 주류별 초과 섭취양 quick
 
     return quickReplies
 
+def makeQuickRepliesForOverCoffeeEntity():
+
+    quickReplies = [
+        {
+            "messageText" : "커피 1일 4번",
+            "action": "message",
+            "label" : "1일 4번"
+        },{
+            "messageText" : "커피 1일 5번",
+            "action": "message",
+            "label" : "1일 5번"
+        },{
+            "messageText" : "커피 1일 6번",
+            "action": "message",
+            "label" : "1일 6번"
+        },{
+            "messageText" : "커피 1일 7번",
+            "action": "message",
+            "label" : "1일 7번"
+        },{
+            "messageText" : "커피 1일 8번",
+            "action": "message",
+            "label" : "1일 8번"
+        },{
+            "messageText" : "커피 1일 9번",
+            "action": "message",
+            "label" : "1일 9번"
+        },{
+            "messageText" : "커피 1일 10번",
+            "action": "message",
+            "label" : "1일 10번"
+        },{
+            "messageText" : "커피 1일 11번",
+            "action": "message",
+            "label" : "1일 11번"
+        },{
+            "messageText" : "커피 1일 12번",
+            "action": "message",
+            "label" : "1일 12번"
+        },{
+            "messageText" : "커피 1일 13번",
+            "action": "message",
+            "label" : "1일 13번"
+        },{
+            "messageText" : "커피 1일 14번",
+            "action": "message",
+            "label" : "1일 14번"
+        },{
+            "messageText" : "커피 1일 15번",
+            "action": "message",
+            "label" : "1일 15번"
+        },{
+            "messageText" : "커피 1일 16번",
+            "action": "message",
+            "label" : "1일 16번"
+        },{
+            "messageText" : "커피 1일 17번",
+            "action": "message",
+            "label" : "1일 17번"
+        },{
+            "messageText" : "커피 1일 18번",
+            "action": "message",
+            "label" : "1일 18번"
+        },{
+            "messageText" : "커피 1일 19번",
+            "action": "message",
+            "label" : "1일 19번"
+        },{
+            "messageText" : "커피 1일 20번",
+            "action": "message",
+            "label" : "1일 20번"
+        }
+    ]
+
+    return quickReplies
+
+def calculateCoffeeFrequency(frequency):
+    
+    if frequency == '1일 4번':
+        frequencyPerDay = 4
+    elif frequency == '1일 5번':
+        frequencyPerDay = 5
+    elif frequency == '1일 6번':
+        frequencyPerDay = 6
+    elif frequency == '1일 7번':
+        frequencyPerDay = 7
+    elif frequency == '1일 8번':
+        frequencyPerDay = 8
+    elif frequency == '1일 9번':
+        frequencyPerDay = 9
+    elif frequency == '1일 10번':
+        frequencyPerDay = 10
+    elif frequency == '1일 11번':
+        frequencyPerDay = 11
+    elif frequency == '1일 12번':
+        frequencyPerDay = 12
+    elif frequency == '1일 13번':
+        frequencyPerDay = 13
+    elif frequency == '1일 14번':
+        frequencyPerDay = 14
+    elif frequency == '1일 15번':
+        frequencyPerDay = 15
+    elif frequency == '1일 16번':
+        frequencyPerDay = 16
+    elif frequency == '1일 17번':
+        frequencyPerDay = 17
+    elif frequency == '1일 18번':
+        frequencyPerDay = 18
+    elif frequency == '1일 19번':
+        frequencyPerDay = 19
+    elif frequency == '1일 20번':
+        frequencyPerDay = 20
+
+    return frequencyPerDay
+
 def calculateFruitTypeWeight(fruitType, fruitName): # 과일별 제철 섭취 시 가중치 값
     
     if fruitType == "제철":
@@ -2411,75 +2673,95 @@ def calculateFruitTypeWeight(fruitType, fruitName): # 과일별 제철 섭취 �
 def calculateDrinkPortion(drinkName, reqEntity):
 
     if drinkName == "소주":
-        if reqEntity == "1병 반":
-            return "1.5"
-        elif reqEntity == "2병":
-            return "4"
-        elif reqEntity == "2병 반":
-            return "2.5"
-        elif reqEntity == "3병":
-            return "3"
-        elif reqEntity == "3병 반":
-            return "3.5"
-        elif reqEntity == "4병":
-            return "4"
+        reqEntity = reqEntity.replace("병","")
+        return reqEntity
+        # if reqEntity == "1병 반":
+        #     return "1.5"
+        # elif reqEntity == "2병":
+        #     return "2"
+        # elif reqEntity == "2병 반":
+        #     return "2.5"
+        # elif reqEntity == "3병":
+        #     return "3"
+        # elif reqEntity == "3병 반":
+        #     return "3.5"
+        # elif reqEntity == "4병":
+        #     return "4"
+
     elif drinkName == "맥주":
-        if reqEntity == "1병":
-            return "2.5"
-        elif reqEntity == "1병 반":
-            return "3.75"
-        elif reqEntity == "2병":
-            return "5"
-        elif reqEntity == "2병 반":
-            return "6.25"
-        elif reqEntity == "3병":
-            return "7.5"
-        elif reqEntity == "3병 반":
-            return "8.75"
-        elif reqEntity == "4병":
-            return "10"
+
+        if reqEntity != "돌아가기":
+            reqEntity = reqEntity.replace("병","")
+            reqEntity = float(reqEntity)*2.5
+            reqEntity = str(reqEntity)
+
+            print("맥주 초과 섭취량 환산값 : ", reqEntity)
+
+        return reqEntity
+        # if reqEntity == "1병":
+        #     return "2.5"
+        # elif reqEntity == "1병 반":
+        #     return "3.75"
+        # elif reqEntity == "2병":
+        #     return "5"
+        # elif reqEntity == "2병 반":
+        #     return "6.25"
+        # elif reqEntity == "3병":
+        #     return "7.5"
+        # elif reqEntity == "3병 반":
+        #     return "8.75"
+        # elif reqEntity == "4병":
+        #     return "10"
+        # elif reqEntity == "5병":
+        #      return "12.5"
+
     elif drinkName == "막걸리":
-        if reqEntity == "3사발":
-            return "1.725"
-        elif reqEntity == "4사발":
-            return "2.3"
-        elif reqEntity == "5사발":
-            return "2.875"
-        elif reqEntity == "6사발":
-            return "3.45"
-        elif reqEntity == "7사발":
-            return "4.025"
-        elif reqEntity == "8사발":
-            return "4.6"
-        elif reqEntity == "9사발":
-            return "5.175"
-        elif reqEntity == "10사발":
-            return "5.75"
-        elif reqEntity == "11사발":
-            return "6.325"
+        reqEntity = reqEntity.replace("사발","")
+        return reqEntity
+        # if reqEntity == "3사발":
+        #     return "3"
+        # elif reqEntity == "4사발":
+        #     return "4"
+        # elif reqEntity == "5사발":
+        #     return "5"
+        # elif reqEntity == "6사발":
+        #     return "6"
+        # elif reqEntity == "7사발":
+        #     return "7"
+        # elif reqEntity == "8사발":
+        #     return "8"
+        # elif reqEntity == "9사발":
+        #     return "9"
+        # elif reqEntity == "10사발":
+        #     return "10"
+        # elif reqEntity == "11사발":
+        #     return "11"
+
     elif drinkName == "포도주":
-        if reqEntity == "3잔":
-            return "3"
-        elif reqEntity == "4잔":
-            return "4"
-        elif reqEntity == "5잔":
-            return "5"
-        elif reqEntity == "6잔":
-            return "6"
-        elif reqEntity == "7잔":
-            return "7"
-        elif reqEntity == "8잔":
-            return "8"
-        elif reqEntity == "9잔":
-            return "9"
-        elif reqEntity == "10잔":
-            return "10"
+        reqEntity = reqEntity.replace("잔","")
+        return reqEntity
+        # if reqEntity == "3잔":
+        #     return "3"
+        # elif reqEntity == "4잔":
+        #     return "4"
+        # elif reqEntity == "5잔":
+        #     return "5"
+        # elif reqEntity == "6잔":
+        #     return "6"
+        # elif reqEntity == "7잔":
+        #     return "7"
+        # elif reqEntity == "8잔":
+        #     return "8"
+        # elif reqEntity == "9잔":
+        #     return "9"
+        # elif reqEntity == "10잔":
+        #     return "10"
         
 
 # 영양소 별 솔루션 계산 함수
 def calculateSolution(user_id, frequencyPerDay, portion, foodName, weightval):
     dbResult = str(식이빈도조사_단위영양성분.find_one({"음식종류" : foodName},{"_id" : False, "음식종류" : False})).replace(':','').replace(',','').replace('}','').split("'")
-    #print(dbResult)
+    print(dbResult)
 
     global fruitTypeWeight
 
@@ -2509,17 +2791,21 @@ def calculateSolution(user_id, frequencyPerDay, portion, foodName, weightval):
     비타민C = frequencyPerDay * Fraction(portion) * float(dbResult[14]) * Fraction(weightval)
     user_dict[user_id].solution_비타민C += 비타민C
 
-    포화지방산 = frequencyPerDay * Fraction(portion) * float(dbResult[16])
+    포화지방산 = frequencyPerDay * Fraction(portion) * float(dbResult[16]) * Fraction(weightval)
     user_dict[user_id].solution_포화지방산 += 포화지방산
     user_dict[user_id].solution_포화지방산_상위.append([포화지방산, foodName])
     
     # print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)))
 
+    calculate = [칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산]
+
+    annual_to_excel(user_id,foodName,calculate)
+
     print(user_dict[user_id])
 
     print("\n<영양소 계산>")
     print("음식종류: ", foodName)
-    print("칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",칼로리,단백질,탄수화물,지방,나트륨,칼슘,비타민C,포화지방산)
+    print("칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",칼로리,탄수화물,단백질,지방,나트륨,칼슘,비타민C,포화지방산)
 
     print("누적 - 칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",user_dict[user_id].solution_칼로리, user_dict[user_id].solution_탄수화물, user_dict[user_id].solution_단백질, user_dict[user_id].solution_지방, user_dict[user_id].solution_나트륨, user_dict[user_id].solution_칼슘, user_dict[user_id].solution_비타민C,  user_dict[user_id].solution_포화지방산)
 
@@ -2557,7 +2843,7 @@ def calculateSolutionBefore(user_id, frequencyPerDay, portion, foodName, weightv
     비타민C = frequencyPerDay * Fraction(portion) * float(dbResult[14]) * Fraction(weightval)
     user_dict[user_id].solution_비타민C -= 비타민C
 
-    포화지방산 = frequencyPerDay * Fraction(portion) * float(dbResult[16])
+    포화지방산 = frequencyPerDay * Fraction(portion) * float(dbResult[16]) * Fraction(weightval)
     user_dict[user_id].solution_포화지방산 -= 포화지방산
     user_dict[user_id].solution_포화지방산_상위.pop()
 
@@ -2572,9 +2858,15 @@ def calculateSolutionBefore(user_id, frequencyPerDay, portion, foodName, weightv
     
     print(user_dict[user_id])
 
+    calculate = [칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산]
+
+    foodName += "_돌아가기"
+
+    annual_to_excel(user_id,foodName,calculate)
+
     print("\n<돌아가기 선택 - 이전 영양소 계산값>")
     print("음식종류: ", foodName, frequencyPerDay, portion)
-    print("칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",칼로리,단백질,탄수화물,지방,나트륨,칼슘,비타민C,포화지방산)
+    print("칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",칼로리,탄수화물,단백질,지방,나트륨,칼슘,비타민C,포화지방산)
 
     print("누적 - 칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n",user_dict[user_id].solution_칼로리, user_dict[user_id].solution_탄수화물, user_dict[user_id].solution_단백질, user_dict[user_id].solution_지방, user_dict[user_id].solution_나트륨, user_dict[user_id].solution_칼슘, user_dict[user_id].solution_비타민C,  user_dict[user_id].solution_포화지방산)
 
@@ -2609,7 +2901,7 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
     ratioSolution = calculateRatio(carbo, protein, fat)
     print(ratioSolution)
 
-    thirdSolution = "\n▶ 영양소별 평가 결과입니다."
+    thirdSolution = "\n▶ 영양소별 평가 결과입니다.(※영양제를 통한 섭취량은 미포함된 값입니다. 향후 섭취량 고려에 참고하시기 바랍니다.)"
     print(thirdSolution)
 
     nutriSolution = ""
@@ -2710,7 +3002,7 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
 
     print(nutriSolution)
 
-    fourthSolution = "▶ 식사 섭취 조언입니다."
+    fourthSolution = "▶ 식사 섭취 조언입니다.(※영양제를 통한 섭취량은 미포함된 값입니다. 향후 섭취량 고려에 참고하시기 바랍니다.)"
 
     if intakeSolution == "": # 모든 영양소가 적절일 때, 출력 안함
         fourthSolution = ""
@@ -3426,6 +3718,34 @@ def to_excel(user_id, food_calculate):
         "calcium" : food_calculate[5],
         "vitamin C" : food_calculate[6],
         "saturated Fat" : food_calculate[7]
+    }
+
+    df = df.append(new_data, ignore_index=True)
+    df.to_excel("./data/" + user_id +".xlsx", index=False)
+
+
+def annual_to_excel(user_id, foodName, food_calculate):
+    print("1년 식단 유저별 엑셀 저장 함수 - 계산 비교용")
+    
+    df = None
+
+    now = str(datetime.today().strftime("%Y-%m-%d"))
+
+    try:
+        df = pd.read_excel("./data/" + user_name + user_id + ".xlsx", engine='openpyxl')
+    except Exception as e:
+        df = pd.DataFrame(columns = ["음식","칼로리","탄수화물","단백질","지방","나트륨","칼슘","비타민C","포화지방산"])
+
+    new_data = {
+        "음식" : foodName,
+        "칼로리" : food_calculate[0],
+        "탄수화물" : food_calculate[1],
+        "단백질" : food_calculate[2],
+        "지방" : food_calculate[3],
+        "나트륨" : food_calculate[4],
+        "칼슘" : food_calculate[5],
+        "비타민C" : food_calculate[6],
+        "포화지방산" : food_calculate[7]
     }
 
     df = df.append(new_data, ignore_index=True)
