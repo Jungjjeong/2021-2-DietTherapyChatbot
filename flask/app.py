@@ -10,6 +10,17 @@ from fractions import Fraction
 import re
 import pytz
 
+# import sys, os
+# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+# from share_data import file_share
+
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from httplib2 import Http
+from oauth2client import file, client, tools
+
+import threading
+
 #from torch import bernoulli
 
 
@@ -88,6 +99,8 @@ def getUserName():
     # print(user)
     # print(type(user))
     user_dict[user_id] = user
+
+    user_dict[user_id].now = str(datetime.today().strftime("%Y-%m-%d"))
 
     res = {
         "version" : "2.0",
@@ -775,7 +788,8 @@ def getNutri():
     user_dict[user_id].nutriFrequency = nutriFrequency
     user_dict[user_id].nutriIntake = nutriIntake
 
-
+    # image_sizedown(user_id)
+    
     res = {
         "version" : "2.0",
         "template":{
@@ -897,6 +911,7 @@ def getNutriIndex():
 import urllib.request
 import requests
 from PIL import Image
+from time import sleep
 
 # 사진 전송 요구 + 사진 클라우드 링크 받아오는 함수 
 @app.route("/getNutriPhoto", methods=["GET", "POST"])
@@ -928,14 +943,23 @@ def getnutriPhoto():
     # print(nutri_photo_urllist)
 
     if nutri_photo_quantity == 1:
+
         nutri_photo_url = nutri_photo_urllist
         # print(nutri_photo_url)
 
         img_path = "/home/user/jiyoung/share_data/pictures/" + str(datetime.now()) + user_dict[user_id].user_name
 
+        user_dict[user_id].photoname.append(img_path)
+
         urllib._urlopener.retrieve(nutri_photo_url, img_path + ".jpg")
+        print("이미지 pictures에 저장 완료")
+
+        # sleep(1)
+        print("이미지 용량 줄이는 함수 호출")
+        # image_sizedown(img_path)
 
     elif nutri_photo_quantity == 2:
+
         commaIdx = nutri_photo_urllist.find(',')
 
         for photonum in range(nutri_photo_quantity):
@@ -947,7 +971,16 @@ def getnutriPhoto():
 
             img_path = "/home/user/jiyoung/share_data/pictures/" + str(datetime.now()) + user_dict[user_id].user_name + str(photonum+1)
 
+            user_dict[user_id].photoname.append(img_path)
+
             urllib._urlopener.retrieve(nutri_photo_url, img_path + ".jpg")
+            print("이미지 pictures에 저장 완료")
+
+            # sleep(1)
+            print("이미지 용량 줄이는 함수 호출")
+            # image_sizedown(img_path)
+
+    #update_file_drive3(nutri_photo_quantity, user_id)
 
 
     res = {
@@ -1004,6 +1037,8 @@ def get1Frequency():
         print("새로운 읍식 섭취 빈도 조사 시작")
         nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
 
+        userinfo_to_excel(user_id)
+
         return getFrequencyofRice(idx)
 
     else:
@@ -1039,15 +1074,19 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2':
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
             elif reqEntity == '빈도선택4':
                 user_dict[user_id].survey.foodEntity.append("2")
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택4')
                 portion = "2"
             weightval = dbResult[19]
             #print(weightval)
@@ -1068,15 +1107,19 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
             elif reqEntity == '빈도선택4':
                 user_dict[user_id].survey.foodEntity.append("2")
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택4')
                 portion = "2" 
             weightval = dbResult[19]
             #print(weightval)
@@ -1098,12 +1141,15 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
             weightval = dbResult[19]
             #print(weightval)
@@ -1130,13 +1176,16 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 # user_dict[user_id].survey.foodEntity[beforeFoodIndex] = dbResult[3]
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
             weightval = dbResult[19]
             #print(weightval)
@@ -1144,8 +1193,11 @@ def get1Frequency():
             if beforeFoodIdx == 83:  # 일반우유
                 user_dict[user_id].survey.foodEntity.append(0)
                 user_dict[user_id].survey.foodEntity.append(0)
+                user_dict[user_id].survey.foodEntityOrg.append('X')
+                user_dict[user_id].survey.foodEntityOrg.append('X')
             elif beforeFoodIdx == 84: # 저지방우유
                 user_dict[user_id].survey.foodEntity.append(0)
+                user_dict[user_id].survey.foodEntityOrg.append('X')
 
             print("우유 종류 : ", beforeFood)
             print("우유 frequency 저장 값 : ", user_dict[user_id].survey.foodFrequency[83], user_dict[user_id].survey.foodFrequency[84], user_dict[user_id].survey.foodFrequency[85])
@@ -1169,12 +1221,15 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
 
             weightval = dbResult[19]
@@ -1197,16 +1252,20 @@ def get1Frequency():
 
             if idx == 90: #과일 전체 섭취양 계산 분리
                 user_dict[user_id].survey.foodEntity.append("0")
+                user_dict[user_id].survey.foodEntityOrg.append('X')
                 portion = "0"
             else:
                 if reqEntity == '빈도선택1':
                     user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                    user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                     portion = dbResult[3]
                 elif reqEntity == '빈도선택2' :
                     user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                    user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                     portion = dbResult[7]
                 elif reqEntity == '빈도선택3':
                     user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                    user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                     portion = dbResult[11]
 
             weightval = dbResult[19]
@@ -1228,12 +1287,15 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
 
             weightval = dbResult[19]
@@ -1256,12 +1318,15 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
 
             weightval = dbResult[19]
@@ -1287,16 +1352,20 @@ def get1Frequency():
 
             if reqEntity == '빈도선택1':
                 user_dict[user_id].survey.foodEntity.append(dbResult[3])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택1')
                 portion = dbResult[3]
             elif reqEntity == '빈도선택2' :
                 user_dict[user_id].survey.foodEntity.append(dbResult[7])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택2')
                 portion = dbResult[7]
             elif reqEntity == '빈도선택3':
                 user_dict[user_id].survey.foodEntity.append(dbResult[11])
+                user_dict[user_id].survey.foodEntityOrg.append('빈도선택3')
                 portion = dbResult[11]
             else:
                 portion = calculateDrinkPortion(beforeFood ["음식종류"], reqEntity) # 각 주류 별로 초과 섭취량 portion 계산 필요
                 user_dict[user_id].survey.foodEntity.append(portion)
+                user_dict[user_id].survey.foodEntityOrg.append(portion)
 
             weightval = dbResult[19]
             #print(weightval)
@@ -1310,6 +1379,7 @@ def get1Frequency():
             if user_dict[user_id].survey.idx == len(foodListForSurvey):
                 # if user_dict[user_id].survey.idx == 4:
                     add_survey_result_to_excel2(user_dict[user_id], user_id)
+                    add_original_survey_result_to_excel(user_dict[user_id], user_id)
 
                     user_dict[user_id].solutionResultText = provideSolution(
                         user_id = user_id, 
@@ -1384,7 +1454,7 @@ def getGeneralEntity():
     user_id = req["userRequest"]["user"]["id"]
 
     #print("1년 섭취 빈도 받기, 섭취량 시작 함수")
-    frequency =  req["action"]["detailParams"]["식품섭취빈도조사선택지"]["value"] #식품섭취빈
+    frequency =  req["action"]["detailParams"]["식품섭취빈도조사선택지"]["value"] #식품섭취빈도
 
     nowFood = foodListForSurvey[user_dict[user_id].survey.idx]
     beforeFood = foodListForSurvey[user_dict[user_id].survey.idx-1]
@@ -1441,6 +1511,7 @@ def getGeneralEntity():
 
     user_dict[user_id].survey.idx += 1
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
     return res
 
 def getFrequencyofRice(idx):
@@ -1536,6 +1607,7 @@ def getRiceEntity():
 
     user_dict[user_id].survey.idx += 1
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
     return res
 
 def getMilkType():
@@ -1585,14 +1657,20 @@ def getFrequencyofMilk():
         user_dict[user_id].survey.idx += 1
         user_dict[user_id].survey.milkType4Solution = 2
         user_dict[user_id].survey.foodFrequency.append(0)
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
         user_dict[user_id].survey.foodEntity.append(0)
+        user_dict[user_id].survey.foodEntityOrg.append("X")
     elif milkType == "반반":
         user_dict[user_id].survey.idx += 2
         user_dict[user_id].survey.milkType4Solution = 1
         user_dict[user_id].survey.foodFrequency.append(0)
         user_dict[user_id].survey.foodFrequency.append(0)
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
         user_dict[user_id].survey.foodEntity.append(0)
         user_dict[user_id].survey.foodEntity.append(0)
+        user_dict[user_id].survey.foodEntityOrg.append("X")
+        user_dict[user_id].survey.foodEntityOrg.append("X")
 
     idx = user_dict[user_id].survey.idx
 
@@ -1666,16 +1744,20 @@ def getMilkEntity():
         frequencyPerDay = 3
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
     user_dict[user_id].survey.milkFrequency = frequencyPerDay
 
     if user_dict[user_id].survey.idx == 83 : # 우유 다음 음식으로 인덱스값 조정, 일반우유
         user_dict[user_id].survey.idx += 3
         user_dict[user_id].survey.foodFrequency.append(0) # 다른 우유에 대해 엑셀값 0으로 지정
         user_dict[user_id].survey.foodFrequency.append(0)
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
 
     elif user_dict[user_id].survey.idx == 84: # 저지방우유
         user_dict[user_id].survey.idx += 2
         user_dict[user_id].survey.foodFrequency.append(0)
+        user_dict[user_id].survey.foodFrequencyOrg.append("X")
 
     elif user_dict[user_id].survey.idx == 85: # 반반우유
         user_dict[user_id].survey.idx += 1
@@ -1786,6 +1868,7 @@ def getAllFruitEntity():
     user_dict[user_id].survey.idx += 1
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
 
     res = {
         "version" : "2.0",
@@ -1930,6 +2013,7 @@ def getFruitEntity():
     user_dict[user_id].survey.idx += 1
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
 
     res = {
         "version" : "2.0",
@@ -2060,6 +2144,7 @@ def getCoffeeEntity():
     user_dict[user_id].survey.idx += 1
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
     coffeeFrequency = frequencyPerDay
 
     res = {
@@ -2155,6 +2240,7 @@ def getDrinkEntity():
     user_dict[user_id].survey.idx += 1
 
     user_dict[user_id].survey.foodFrequency.append(frequencyPerDay)
+    user_dict[user_id].survey.foodFrequencyOrg.append(frequency)
 
     res = {
         "version" : "2.0",
@@ -2212,9 +2298,23 @@ def getDrinkOver():
 
 @app.route("/serveSolution", methods = ["GET", "POST"])
 def serveSolution():
+
     req = request.get_json()
     user_id = req["userRequest"]["user"]["id"]
+
+    #update_file_drive1(user_id)
+    t1 = threading.Thread(target = update_file_drive1)
+    print("Thread 가동 - 데이터저장, 식이보충제 엑셀 파일 구글 드라이브에 업로드")
+    t1.start()
+
+    t2 = threading.Thread(target = update_file_drive2, args = (user_id, ))
+    print("Thread2 가동 - 영양식 계산 엑셀 파일 구글 드라이브에 업로드")
+    t2.start()
+
+
     solutionResultText = user_dict[user_id].solutionResultText
+
+    print(solutionResultText)
 
     res = {
         "version" : "2.0",
@@ -2240,26 +2340,6 @@ def serveSolution():
 #------------------------------------------------------------------------관련 함수------------------------------------------------------------------------#
 
 # 설문 결과 엑셀로.
-# def add_survey_result_to_excel(user: SurveyUser):
-
-#     now = str(datetime.now())
-#     excel_row = []
-
-#     excel_row.append(now)
-#     for info in user.get_user_info():
-#         excel_row.append(info)
-
-#     for frequency, entity in zip(user.survey.foodFrequency, user.survey.foodFrequency):
-#         excel_row.append(frequency)
-#         excel_row.append(entity)
-
-#     while len(excel_row) < 260:
-#         excel_row.append("응답 없음")
-
-#     df = None
-#     df = pd.read_excel("./data/1년섭취빈도조사.xlsx", engine='openpyxl')
-#     df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
-#     df.to_excel("./data/1년섭취빈도조사.xlsx", index=False)
 
 def add_survey_result_to_excel2(user: SurveyUser, user_id):
 
@@ -2267,12 +2347,22 @@ def add_survey_result_to_excel2(user: SurveyUser, user_id):
     excel_row = []
 
     excel_row.append(now)
+
     for info in user.get_user_info():
         excel_row.append(info)
+
+    excel_row.append(user_dict[user_id].solution_칼로리)
+    excel_row.append(user_dict[user_id].solution_탄수화물)
+    excel_row.append(user_dict[user_id].solution_지방)
+    excel_row.append(user_dict[user_id].solution_단백질)
+    excel_row.append(user_dict[user_id].solution_포화지방산)
+    excel_row.append(user_dict[user_id].solution_나트륨)
+    excel_row.append(user_dict[user_id].solution_칼슘)
+    excel_row.append(user_dict[user_id].solution_비타민C)
     
     print(excel_row)
 
-    for frequency, entity in zip(user.survey.foodFrequency, user.survey.foodFrequency):
+    for frequency, entity in zip(user.survey.foodFrequency, user.survey.foodEntity):
         excel_row.append(frequency)
         excel_row.append(entity)
 
@@ -2281,17 +2371,240 @@ def add_survey_result_to_excel2(user: SurveyUser, user_id):
         excel_row.append(time)
         excel_row.append(number)
 
-    while len(excel_row) < 262:
+    while len(excel_row) < 330:
         excel_row.append("응답 없음")
 
     df = None
-    df = pd.read_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_챗봇데이터저장2.xlsx", engine='openpyxl')
+    df = pd.read_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_데이터저장.xlsx", engine='openpyxl')
     # print(df.columns)
 
 
     df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
-    df.to_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_챗봇데이터저장2.xlsx", index=False)
+    df.to_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_데이터저장.xlsx", index=False)
 
+# 응답한 원본 데이터 엑셀 저장 함수
+def add_original_survey_result_to_excel(user: SurveyUser, user_id):
+
+    now = str(datetime.now())
+    excel_row = []
+
+    excel_row.append(now)
+
+    for info in user.get_user_info():
+        excel_row.append(info)
+
+    excel_row.append(user_dict[user_id].solution_칼로리)
+    excel_row.append(user_dict[user_id].solution_탄수화물)
+    excel_row.append(user_dict[user_id].solution_지방)
+    excel_row.append(user_dict[user_id].solution_단백질)
+    excel_row.append(user_dict[user_id].solution_포화지방산)
+    excel_row.append(user_dict[user_id].solution_나트륨)
+    excel_row.append(user_dict[user_id].solution_칼슘)
+    excel_row.append(user_dict[user_id].solution_비타민C)
+    
+    print(excel_row)
+
+    for frequency, entity in zip(user.survey.foodFrequencyOrg, user.survey.foodEntityOrg):
+        excel_row.append(frequency)
+        excel_row.append(entity)
+
+    while len(excel_row) < 255:
+        excel_row.append("응답 없음")
+
+    df = None
+    df = pd.read_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_원본데이터저장.xlsx", engine='openpyxl')
+    # print(df.columns)
+
+
+    df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
+    df.to_excel("/home/user/jiyoung/share_data/1년섭취빈도조사_원본데이터저장.xlsx", index=False)
+
+def userinfo_to_excel(user_id):
+    print("사용중인 사용자 알기 위한 정보 엑셀에 저장")
+
+    excel_row = []
+
+    start == 1  # 사용 시작
+    now = str(datetime.now()) # 사용 시작 시간
+    excel_row.append(now)
+    excel_row.append(user_id)
+    excel_row.append(user_dict[user_id].user_name)
+
+    df = None
+    df = pd.read_excel("/home/user/jiyoung/DietTheraphyChatbot/1년섭취빈도조사_사용자여부.xlsx", engine='openpyxl')
+
+    df = df.append(pd.Series(excel_row, index=df.columns) , ignore_index=True)
+    df.to_excel("/home/user/jiyoung/DietTheraphyChatbot/1년섭취빈도조사_사용자여부.xlsx", index=False)
+
+   
+
+def update_file_drive1():
+    print("데이터저장, 식이보충제, 원본데이터 엑셀 파일을 구글드라이브에 업로드하는 함수")
+    try :
+        import argparse
+        flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    except ImportError:
+        flags = None
+
+    SCOPES = 'https://www.googleapis.com/auth/drive.file'
+    store = file.Storage('storage.json')
+    creds = store.get()
+
+    if not creds or creds.invalid:
+        print("make new storage data file ")
+        flow = client.flow_from_clientsecrets('/home/user/jiyoung/DietTheraphyChatbot/client_secret_drive_woo.json', SCOPES)
+        creds = tools.run_flow(flow, store, flags) if flags else tools.run(flow, store)
+
+    DRIVE = build('drive', 'v3', http=creds.authorize(Http()))
+
+    FILES = (
+        ('/home/user/jiyoung/share_data/1년섭취빈도조사_식이보충제.xlsx'),
+        ('/home/user/jiyoung/share_data/1년섭취빈도조사_데이터저장.xlsx'),
+        ('/home/user/jiyoung/share_data/1년섭취빈도조사_원본데이터저장.xlsx'),
+    )
+
+    folder_id = '1bX0Mjqt3NsgpXp4TWO2hrBUt_pMDcxA1'
+    filenamelist = ['1년섭취빈도조사_식이보충제','1년섭취빈도조사_데이터저장', '1년섭취빈도조사_원본데이터저장']
+
+    for i in range(3):
+        file_name = FILES[i]
+        metadata = {'name': filenamelist[i],
+                    'parents' : [folder_id],
+                    'mimeType': None
+                    }
+
+        res = DRIVE.files().create(body=metadata, media_body=file_name).execute()
+        if res:
+            print('Uploaded "%s" (%s)' % (file_name, res['mimeType']))
+
+def update_file_drive2(user_id):
+    print("영양소 게산 엑셀 파일을 구글드라이브에 업로드하는 함수")
+    try :
+        import argparse
+        flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    except ImportError:
+        flags = None
+
+    SCOPES = 'https://www.googleapis.com/auth/drive.file'
+    store = file.Storage('storage.json')
+    creds = store.get()
+
+    if not creds or creds.invalid:
+        print("make new storage data file ")
+        flow = client.flow_from_clientsecrets('/home/user/jiyoung/DietTheraphyChatbot/client_secret_drive_woo.json', SCOPES)
+        creds = tools.run_flow(flow, store, flags) if flags else tools.run(flow, store)
+
+    DRIVE = build('drive', 'v3', http=creds.authorize(Http()))
+
+    FILES = (('/home/user/jiyoung/DietTheraphyChatbot/data/' + user_dict[user_id].now + user_dict[user_id].user_name + '.xlsx'))
+
+
+    folder_id = '1h_EgnuhsFfEMWk5QWTBB1LJvWHsXVG6s'
+    file_upload_name = user_dict[user_id].now + user_dict[user_id].user_name + '_1년섭취빈도조사_영양소계산'
+
+    file_name = FILES
+    metadata = {'name': file_upload_name,
+                'parents' : [folder_id],
+                'mimeType': None
+                }
+
+    res = DRIVE.files().create(body=metadata, media_body=file_name).execute()
+    if res:
+        print('Uploaded "%s" (%s)' % (file_name, res['mimeType']))
+
+def update_file_drive3(photonum, user_id):
+
+    try :
+        import argparse
+        flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    except ImportError:
+        flags = None
+
+    SCOPES = 'https://www.googleapis.com/auth/drive.file'
+    store = file.Storage('storage.json')
+    creds = store.get()
+
+    if not creds or creds.invalid:
+        print("make new storage data file ")
+        flow = client.flow_from_clientsecrets('/home/user/jiyoung/DietTheraphyChatbot/client_secret_drive_woo.json', SCOPES)
+        creds = tools.run_flow(flow, store, flags) if flags else tools.run(flow, store)
+
+
+    DRIVE = build('drive', 'v3', http=creds.authorize(Http()))
+
+    if photonum == 1 :
+
+        user_dict[user_id].photoname[0] = user_dict[user_id].photoname[0].replace("/home/user/jiyoung/share_data/pictures/","")
+
+        FILES = (('/home/user/jiyoung/share_data/pictures/' + user_dict[user_id].photoname[0] + '.jpg'))
+
+        folder_id = '1EfAKo45J3yGpbXs0ohEsyUQ2a5T53k87'
+        file_upload_name = user_dict[user_id].photoname[0]
+
+        file_name = FILES
+        metadata = {'name': file_upload_name,
+                    'parents' : [folder_id],
+                    'mimeType': None
+                    }
+
+        res = DRIVE.files().create(body=metadata, media_body=file_name).execute()
+        if res:
+            print('Uploaded "%s" (%s)' % (file_name, res['mimeType']))
+    
+    elif photonum == 2 :
+
+        for i in range(2):
+
+            user_dict[user_id].photoname[i] = user_dict[user_id].photoname[i].replace("/home/user/jiyoung/share_data/pictures/","")
+
+            FILES = (('/home/user/jiyoung/share_data/pictures/' + user_dict[user_id].photoname[i] + '.jpg'))
+
+            folder_id = '1EfAKo45J3yGpbXs0ohEsyUQ2a5T53k87'
+            file_upload_name = user_dict[user_id].photoname[i]
+
+            file_name = FILES
+            metadata = {'name': file_upload_name,
+                        'parents' : [folder_id],
+                        'mimeType': None
+                        }
+
+            res = DRIVE.files().create(body=metadata, media_body=file_name).execute()
+            if res:
+                print('Uploaded "%s" (%s)' % (file_name, res['mimeType']))
+
+
+import os
+from PIL import Image
+
+def image_sizedown(user_id):
+    print("이미지 용량을 줄여주는 함수")
+
+    # path = '/home/user/jiyoung/share_data/pictures/' # 원본 폴더
+    resultPath = '/home/user/jiyoung/share_data/low_pictures/' # 대상 폴더
+    
+    # file = img_path
+    # img = Image.open(file)
+    # img.save(os.path.join(resultPath, file), 'JPEG', qualty=85) # 품질 85로 줄이면서 용량 줄이기
+    # print("이미지 용량 줄이기 success")
+
+    list = user_dict[user_id].photoname
+
+    for file in list:
+        img = Image.open(file)
+        img.save(os.path.join(resultPath, file), 'JPEG', qualty=85) # 품질 85로 줄이면서 용량 줄이기
+        print("이미지 용량 줄이기 success")
+
+    # list = os.listdir(path)
+    
+    # list.sort()
+    
+    # for filename in list:
+    
+    #     file = path + filename
+    
+    #     img = Image.open(file)
+    #     img.save(os.path.join(resultPath, filename), 'JPEG', qualty=85) # 품질 85로 줄이면서 용량 줄이기
+    
 
 def add_nutri_result_to_excel(user: SurveyUser, user_id):
 
@@ -2797,7 +3110,7 @@ def calculateSolution(user_id, frequencyPerDay, portion, foodName, weightval):
     
     # print("칼로리 : " + str(frequencyPerDay * Fraction(portion) * float(dbResult[2]) * Fraction(weightval)))
 
-    calculate = [칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산]
+    calculate = [칼로리, 탄수화물, 지방, 단백질, 포화지방산, 나트륨, 칼슘, 비타민C]
 
     annual_to_excel(user_id,foodName,calculate)
 
@@ -2848,17 +3161,23 @@ def calculateSolutionBefore(user_id, frequencyPerDay, portion, foodName, weightv
     user_dict[user_id].solution_포화지방산_상위.pop()
 
     user_dict[user_id].survey.foodFrequency.pop()
+    user_dict[user_id].survey.foodFrequencyOrg.pop()
     user_dict[user_id].survey.foodEntity.pop()
+    user_dict[user_id].survey.foodEntityOrg.pop()
 
     if foodName == "일반우유" or foodName == "저지방우유" or foodName == "일반, 저지방우유 반반":
         user_dict[user_id].survey.foodFrequency.pop()
         user_dict[user_id].survey.foodFrequency.pop()
+        user_dict[user_id].survey.foodFrequencyOrg.pop()
+        user_dict[user_id].survey.foodFrequencyOrg.pop()
         user_dict[user_id].survey.foodEntity.pop()
         user_dict[user_id].survey.foodEntity.pop()
+        user_dict[user_id].survey.foodEntityOrg.pop()
+        user_dict[user_id].survey.foodEntityOrg.pop()
     
     print(user_dict[user_id])
 
-    calculate = [칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산]
+    calculate = [칼로리, 탄수화물, 지방, 단백질, 포화지방산, 나트륨, 칼슘, 비타민C]
 
     foodName += "_돌아가기"
 
@@ -2880,6 +3199,12 @@ def provideSolution(user_id, energy, carbo, protein, fat, sodium, calcium, vitam
 
     print("\n최종 - 칼로리, 탄수화물, 단백질, 지방, 나트륨, 칼슘, 비타민C, 포화지방산 :\n", energy, carbo, protein, fat, sodium, calcium, vitaminC, SFA)
     print("PAL , BMI : ",user_dict[user_id].PAL, BMI)
+
+    calculate = [energy, carbo, fat, protein, SFA, sodium, calcium, vitaminC]
+
+    foodName = "최종"
+
+    annual_to_excel(user_id,foodName,calculate)
 
     first = [0, ""]
     second = [0, ""]
@@ -3700,8 +4025,6 @@ def to_excel(user_id, food_calculate):
     
     df = None
 
-    now = str(datetime.today().strftime("%Y-%m-%d"))
-
     try:
         df = pd.read_excel("./data/" + user_id + ".xlsx", engine='openpyxl')
     except Exception as e:
@@ -3729,27 +4052,26 @@ def annual_to_excel(user_id, foodName, food_calculate):
     
     df = None
 
-    now = str(datetime.today().strftime("%Y-%m-%d"))
-
     try:
-        df = pd.read_excel("./data/" + user_name + user_id + ".xlsx", engine='openpyxl')
+        df = pd.read_excel("/home/user/jiyoung/DietTheraphyChatbot/data/" + user_dict[user_id].now + user_dict[user_id].user_name + ".xlsx", engine='openpyxl')
     except Exception as e:
-        df = pd.DataFrame(columns = ["음식","칼로리","탄수화물","단백질","지방","나트륨","칼슘","비타민C","포화지방산"])
+        df = pd.DataFrame(columns = ["음식","칼로리","탄수화물","지방","단백질","포화지방산","나트륨","칼슘","비타민C"])
 
     new_data = {
         "음식" : foodName,
         "칼로리" : food_calculate[0],
         "탄수화물" : food_calculate[1],
-        "단백질" : food_calculate[2],
-        "지방" : food_calculate[3],
-        "나트륨" : food_calculate[4],
-        "칼슘" : food_calculate[5],
-        "비타민C" : food_calculate[6],
-        "포화지방산" : food_calculate[7]
+        "지방" : food_calculate[2],
+        "단백질" : food_calculate[3],
+        "포화지방산" : food_calculate[4],
+        "나트륨" : food_calculate[5],
+        "칼슘" : food_calculate[6],
+        "비타민C" : food_calculate[7]
     }
 
     df = df.append(new_data, ignore_index=True)
-    df.to_excel("./data/" + user_id +".xlsx", index=False)
+    df.to_excel("/home/user/jiyoung/DietTheraphyChatbot/data/" + user_dict[user_id].now + user_dict[user_id].user_name +".xlsx", index=False)
+
 
 
 #------------------------------------------------------------------------ Port------------------------------------------------------------------------#

@@ -18,7 +18,9 @@ class SurveyForm():
         self.milkFreqeuncy = 0
         self.milkEntity = 0
         self.foodFrequency = []
+        self.foodFrequencyOrg = []
         self.foodEntity = []
+        self.foodEntityOrg = []
         self.idx = 0
 
     def to_csv_string(self):

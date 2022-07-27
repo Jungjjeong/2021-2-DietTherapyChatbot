@@ -26,6 +26,8 @@ class SurveyUser():
         self.nutriIntake = ""
         self.survey = SurveyForm()
         self.PAL = 7.7
+        self.now = ""
+        self.photoname = []
 
         self.solution_칼로리 = 0
         self.solution_탄수화물 = 0
